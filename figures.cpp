@@ -135,6 +135,7 @@ int figureScore(Figure f, Color c, int pos)
     if (f == Figure::NONE) {
         return 0;
     }
+    // for white color, PST tables are reversed
     if (c == Color::WHITE) {
         pos = 64 - pos;
     }
