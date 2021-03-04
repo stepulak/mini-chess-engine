@@ -24,19 +24,34 @@ enum class Color : Square {
     BLACK,
 };
 
-Figure figure(Square s)
+static constexpr Figure figure(Square s)
 {
     return static_cast<Figure>(s & 0xF);
 }
 
-Color color(Square s)
+static constexpr Color color(Square s)
 {
     return static_cast<Color>(s >> 4);
 }
 
-Square square(Figure f, Color c)
+static constexpr Square square(Figure f, Color c)
 {
     return (static_cast<Square>(c) << 4) | static_cast<Square>(f);
+}
+
+static constexpr bool enemy(Square s1, Square s2)
+{
+    return figure(s1) != Figure::NONE && figure(s2) != Figure::NONE && color(s1) != color(s2);
+}
+
+static constexpr bool own(Square s1, Square s2)
+{
+    return figure(s1) != Figure::NONE && figure(s2) != Figure::NONE && color(s1) == color(s2);
+}
+
+static constexpr Color enemyColor(Color c)
+{
+    return c == Color::WHITE ? Color::BLACK : Color::WHITE;
 }
 
 int figureScore(Figure f, Color c, int pos);
