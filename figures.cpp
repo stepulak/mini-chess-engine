@@ -143,5 +143,5 @@ std::string figureSymbol(Figure f, Color c)
     if (f == Figure::NONE) {
         return ".";
     }
-    return FIGURE_SYMBOLS[figureIndex(f) * (c == Color::WHITE ? 1 : 2)];
+    return FIGURE_SYMBOLS[figureIndex(f) + (c == Color::WHITE ? 0 : NUM_FIGURES)];
 }

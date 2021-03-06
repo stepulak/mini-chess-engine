@@ -9,6 +9,8 @@
 #include <optional>
 #include <string>
 #include <unordered_set>
+#include <iostream>
+#include <optional>
 
 /*
 class TranspositionTable {
@@ -152,20 +154,21 @@ cont:*/
 
     ttmiss++;*/
 
-    for (const auto& m : generateMoves(b, c)) {
-        int undos = b.applyMove(m);
-        score = max(score, -negamax(b, enemyColor(c), -beta, -alpha, maxing, depth-1));
-        b.undo();
-        if (undos == 2) {
-            b.undo();
-        }
-        alpha = max(alpha, score);
-        if (alpha >= beta) {
-            break;
+    for (auto generator = b.moveGenerator(c); !generator.ended();) {
+        for (const auto& m : generator.nextMoves()) {
+            int undos = b.apply(m);
+            score = max(score, -negamax(b, enemyColor(c), -beta, -alpha, maxing, depth-1));
+            b.undo(undos);
+            alpha = max(alpha, score);
+            if (alpha >= beta) {
+                goto end;
+            }
         }
     }
 
-    if (it && it->depth > depth) {
+end:
+
+    /*if (it && it->depth > depth) {
         return score;
     }
 
@@ -174,45 +177,36 @@ cont:*/
     tv.score = score;
     tv.alpha = alphaOrig;
     tv.beta = betaOrig;
-    tt.set(b.bitboard(), tv);
+    tt.set(b.bitboard(), tv);*/
 
     return score;
 }
 
 std::optional<Move> bestMove_(Board& b, Color c, size_t depth)
 {
-    const auto moves = generateMoves(b, c);
-    if (moves.empty()) {
+    auto generator = b.moveGenerator(c);
+    if (generator.ended()) {
         return {};
     }
 
     int bestScore = MIN;
     Move bestMove;
 
-    for (const auto& m : moves) {
-        int undos = b.applyMove(m);
-        if (hstats.get(b.bitboard()) == 2u) {
-            // 3-fold repetition
-            // skip this move
-            b.undo();
-            if (undos == 2) {
-                b.undo();
+    while(!generator.ended()) {
+        for (const auto& m : generator.nextMoves()) {
+            int undos = b.apply(m);
+            /*if (hstats.get(b.bitboard()) == 2u) {
+                // 3-fold repetition
+                // skip this move
+                b.undo(undos);
+                continue;
+            }*/
+            const auto score = -negamax(b, enemyColor(c), MIN, MAX, depth % 2 == 0, depth - 1u);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = m;
             }
-            continue;
-        }
-        const auto score = -negamax(b, enemyColor(c), MIN, MAX, depth % 2 == 0, depth - 1u);
-        //std::cout << score << std::endl;
-        /*if ((c == WHITE && score > bestScore) || (c == BLACK && score < bestScore)) {
-            bestScore = score;
-            bestMove = m;
-        }*/
-        if (score > bestScore) {
-            bestScore = score;
-            bestMove = m;
-        }
-        b.undo();
-        if (undos == 2) {
-            b.undo();
+            b.undo(undos);
         }
     }
 
@@ -223,7 +217,7 @@ std::optional<Move> bestMove_(Board& b, Color c, size_t depth)
     return std::make_optional(bestMove);
 }
 
-std::optional<Move> bestMove(Board& b, Color c, size_t depth = 8u)
+std::optional<Move> bestMove(Board& b, Color c, size_t depth = 4u)
 {
     std::optional<Move> bm;
     for (size_t d = depth; d <= depth; d++) {
@@ -234,30 +228,27 @@ std::optional<Move> bestMove(Board& b, Color c, size_t depth = 8u)
 
 int main()
 {
-    std::cout << "♛" << std::endl;
-
     Board b;
-    b.print();
-    std::cout << std::endl
-              << std::endl;
-    auto c = WHITE;
+    std::cout << b << std::endl << std::endl;
+
+    auto c = Color::WHITE;
     bool computerPlays = true;
 
     while (true) {
-        std::cout << "NOW PLAYS: " << (c == WHITE ? "white" : "black") << std::endl;
+        std::cout << "NOW PLAYS: " << (c == Color::WHITE ? "white" : "black") << std::endl;
+
         if (!computerPlays) {
             std::cout << "MOVE: ";
             std::string move;
             std::cin >> move;
             Move m;
-            m.fX = move[0] - 'a';
-            m.fY = move[1] - '1';
-            m.tX = move[2] - 'a';
-            m.tY = move[3] - '1';
-            const auto from = b.get(m.fX, m.fY);
-            m.figure = figure(from);
+            m.from.x = move[0] - 'a';
+            m.from.y = move[1] - '1';
+            m.to.x = move[2] - 'a';
+            m.to.y = move[3] - '1';
+            m.toSq = b.get(m.from.x, m.from.y);
 
-            if (m.figure == KING_NOT_MOVED) {
+            /*if (m.figure == KING_NOT_MOVED) {
                 if (color(from) == WHITE) {
                     if (m.tY == 0 && m.tX == 6 && figure(b.get(7, 0)) == ROOK_NOT_MOVED) {
                         b.applyMove(Move { 7, 0, 5, 0, ROOK_NOT_MOVED });
@@ -271,8 +262,8 @@ int main()
                         b.applyMove(Move { 0, 7, 3, 7, ROOK_NOT_MOVED });
                     }
                 }
-            }
-            b.applyMove(m);
+            }*/
+            b.apply(m);
             computerPlays = true;
         } else {
             computerPlays = false;
@@ -285,20 +276,20 @@ int main()
                 std::cout << "NO MOVE AVAILABLE" << std::endl;
                 return 1;
             }
-            std::cout << "MOVE: " << char(m->fX + 'a') << (m->fY + 1) << char(m->tX + 'a') << (m->tY + 1) << std::endl;
+            std::cout << "MOVE: " << char(m->from.x + 'a') << (m->from.y + 1) << char(m->to.x + 'a') << (m->to.y + 1) << std::endl;
 
-            b.applyMove(*m);
-            hstats.inc(b.bitboard());
+            b.apply(*m);
+            //hstats.inc(b.bitboard());
         }
         c = enemyColor(c);
-        b.print();
-            std::cout << "TTHIT: " << tthit << std::endl;
-            std::cout << "BHIT: " << bhit << std::endl;
-            std::cout << "AIHIT: " << aihit << std::endl;
-            std::cout << "BIHIT: " << bihit << std::endl;
-            std::cout << "MHIT: " << mhit << std::endl;
-            std::cout << "TTMISS: " << ttmiss << std::endl;
-            std::cout << "NODES: " << nodes << std::endl;
+        std::cout << b << std::endl;
+        std::cout << "TTHIT: " << tthit << std::endl;
+        std::cout << "BHIT: " << bhit << std::endl;
+        std::cout << "AIHIT: " << aihit << std::endl;
+        std::cout << "BIHIT: " << bihit << std::endl;
+        std::cout << "MHIT: " << mhit << std::endl;
+        std::cout << "TTMISS: " << ttmiss << std::endl;
+        std::cout << "NODES: " << nodes << std::endl;
         std::cout << std::endl
                   << std::endl;
     }

@@ -1,17 +1,21 @@
 #include "board.hpp"
 #include "figure_moves.hpp"
 
+#include <iostream>
+
 Board::MoveGenerator::MoveGenerator(const Board& b, Color c)
     : _board(b)
     , _color(c)
 {
 }
 
-bool Board::MoveGenerator::ended() const {
+bool Board::MoveGenerator::ended() const
+{
     return y >= Board::HEIGHT;
 }
 
-Moves Board::MoveGenerator::nextMoves() {
+Moves Board::MoveGenerator::nextMoves()
+{
     while (!ended()) {
         const auto sq = _board.get(x, y);
         if (color(sq) != _color) {
@@ -28,7 +32,8 @@ Moves Board::MoveGenerator::nextMoves() {
     return {};
 }
 
-void Board::MoveGenerator::nextSquare() {
+void Board::MoveGenerator::nextSquare()
+{
     x++;
     if (x >= Board::WIDTH) {
         x = 0;
@@ -36,11 +41,43 @@ void Board::MoveGenerator::nextSquare() {
     }
 }
 
-bool Board::kingCaptured() const {
+Board::Board()
+{
+    _board.fill(EMPTY_SQUARE);
+
+    for (int x = 0; x < WIDTH; x++) {
+        set(x, 1, square(Figure::PAWN_IDLE, Color::WHITE));
+        set(x, 6, square(Figure::PAWN_IDLE, Color::BLACK));
+    }
+
+    set(0, 0, square(Figure::ROOK_IDLE, Color::WHITE));
+    set(0, 7, square(Figure::ROOK_IDLE, Color::BLACK));
+    set(7, 0, square(Figure::ROOK_IDLE, Color::WHITE));
+    set(7, 7, square(Figure::ROOK_IDLE, Color::BLACK));
+
+    set(1, 0, square(Figure::KNIGHT, Color::WHITE));
+    set(1, 7, square(Figure::KNIGHT, Color::BLACK));
+    set(6, 0, square(Figure::KNIGHT, Color::WHITE));
+    set(6, 7, square(Figure::KNIGHT, Color::BLACK));
+
+    set(2, 0, square(Figure::BISHOP, Color::WHITE));
+    set(2, 7, square(Figure::BISHOP, Color::BLACK));
+    set(5, 0, square(Figure::BISHOP, Color::WHITE));
+    set(5, 7, square(Figure::BISHOP, Color::BLACK));
+
+    set(3, 0, square(Figure::QUEEN, Color::WHITE));
+    set(3, 7, square(Figure::QUEEN, Color::BLACK));
+    set(4, 0, square(Figure::KING_IDLE, Color::WHITE));
+    set(4, 7, square(Figure::KING_IDLE, Color::BLACK));
+}
+
+bool Board::kingCaptured() const
+{
     return std::abs(_score) > 80000;
 }
 
-size_t Board::apply(const Move& m) {
+size_t Board::apply(const Move& m)
+{
     const auto fromSq = get(m.from.x, m.from.y);
     const auto toSq = get(m.to.x, m.to.y);
     const auto fromSqCol = color(fromSq);
@@ -67,7 +104,8 @@ size_t Board::apply(const Move& m) {
     return 1u;
 }
 
-void Board::undo(size_t numUndoMoves) {
+void Board::undo(size_t numUndoMoves)
+{
     for (size_t i = 0u; i < numUndoMoves; i++) {
         if (_undoMoves.empty()) {
             throw std::runtime_error("unable to undo");
@@ -82,6 +120,21 @@ void Board::undo(size_t numUndoMoves) {
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const Board& b) {
-
+std::ostream& operator<<(std::ostream& os, const Board& b)
+{
+    for (int y = b.HEIGHT - 1; y >= 0; y--) {
+        os << (y + 1) << '.' << "  ";
+        for (int x = 0; x < b.WIDTH; x++) {
+            const auto sq = b.get(x, y);
+            const auto sym = figureSymbol(figure(sq), color(sq));
+            os << sym << ' ';
+        }
+        std::cout << std::endl;
+    }
+    os << std::endl
+       << "    ";
+    for (int x = 0; x < b.WIDTH; x++) {
+        std::cout << static_cast<char>(x + 'a') << '.';
+    }
+    std::cout << std::endl;
 }

@@ -22,6 +22,8 @@ struct MoveBase {
     Point to;
     Square toSq;
 
+    MoveBase() = default;
+
     MoveBase(Point from_, Point to_, Square toSq_)
         : from(from_)
         , to(to_)

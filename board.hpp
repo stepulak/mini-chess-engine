@@ -7,13 +7,20 @@
 
 class Board {
 public:
-    static constexpr size_t WIDTH = 8u;
-    static constexpr size_t HEIGHT = 8u;
-    static constexpr size_t SIZE = WIDTH * HEIGHT;
+    using BoardType = std::array<Square, 64u>;
+
+    // Intentionaly not using size_t
+    static constexpr int WIDTH = 8u;
+    static constexpr int HEIGHT = 8u;
+    static constexpr int SIZE = WIDTH * HEIGHT;
     
     class MoveGenerator {
     public:
 
+        // TODO generator one by one
+        // TODO iterator
+
+        MoveGenerator() = delete;
         MoveGenerator(const Board& b, Color c);
 
         bool ended() const;
@@ -28,8 +35,6 @@ public:
         void nextSquare();
     };
 
-    using Type = std::array<Square, 64u>;
-
     Board();
 
     constexpr Square get(int pos) const {
@@ -40,11 +45,11 @@ public:
         return get(position(x, y));
     }
 
-    constexpr void set(int pos, Square s) {
+    void set(int pos, Square s) {
         _board[pos] = s;
     }
 
-    constexpr void set(int x, int y, Square s) {
+    void set(int x, int y, Square s) {
         set(position(x, y), s);
     }
 
@@ -52,8 +57,11 @@ public:
         return _score;
     }
 
-    bool kingCaptured() const;
+    MoveGenerator moveGenerator(Color c) const {
+        return MoveGenerator(*this, c);
+    }
 
+    bool kingCaptured() const;
     size_t apply(const Move& m);
     void undo(size_t numUndoMoves);
 
@@ -62,7 +70,7 @@ public:
     }
 
 private:
-    std::array<Square, 64u> _board;
+    BoardType _board;
     UndoMoves _undoMoves;
     int _score = 0;
 
