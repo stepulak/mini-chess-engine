@@ -72,60 +72,53 @@ const Pst KING_PST = {
     17, 30, -3, -14, 6, -1, 40, 18
 };
 
-constexpr size_t figureIndex(Figure f)
-{
-    return static_cast<size_t>(f);
-}
-
-constexpr auto NUM_FIGURES = figureIndex(Figure::NONE) - figureIndex(Figure::PAWN);
-
 const std::array<Pst, NUM_FIGURES> FIGURE_PST = {
     PAWN_PST,
-    PAWN_PST, // pawn not moved
+    PAWN_PST, // pawn idle
     PAWN_PST, // pawn en passant
     KNIGHT_PST,
     BISHOP_PST,
     ROOK_PST,
-    ROOK_PST, // rook not moved
+    ROOK_PST, // rook idle
     QUEEN_PST,
     KING_PST,
-    KING_PST // king not moved
+    KING_PST // king idle
 };
 
 const std::array<int, NUM_FIGURES> FIGURE_SCORE = {
     100, // pawn
-    100, // pawn not moved
+    100, // pawn idle
     100, // pawn en passant
     280, // knight
     320, // bishop
     479, // rook
-    479, // rook not moved
+    479, // rook idle
     929, // queen
     60000, // king
-    60000 // king not moved
+    60000 // king idle
 };
 
 const std::array<std::string, NUM_FIGURES* 2u> FIGURE_SYMBOLS = {
     "♟",
-    "♟", // pawn not moved
+    "♟", // pawn idle
     "♟", // pawn en passant
     "♞",
     "♝",
     "♜",
-    "♜", // rook not moved
+    "♜", // rook idle
     "♛",
     "♚",
-    "♚", // king not moved
+    "♚", // king idle
     "♙",
-    "♙", // pawn not moved
+    "♙", // pawn idle
     "♙", // pawn en passant
     "♘",
     "♗",
     "♖",
-    "♖", // rook not moved
+    "♖", // rook idle
     "♕",
     "♔",
-    "♔", // king not moved
+    "♔", // king idle
 };
 
 } // namespace

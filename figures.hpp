@@ -7,15 +7,15 @@ using Square = uint8_t;
 
 enum class Figure : Square {
     PAWN = 0,
-    PAWN_NOT_MOVED,
+    PAWN_IDLE,
     PAWN_EN_PASSANT,
     KNIGHT,
     BISHOP,
     ROOK,
-    ROOK_NOT_MOVED,
+    ROOK_IDLE,
     QUEEN,
     KING,
-    KING_NOT_MOVED,
+    KING_IDLE,
     NONE,
 };
 
@@ -23,6 +23,13 @@ enum class Color : Square {
     WHITE = 0,
     BLACK,
 };
+
+constexpr size_t figureIndex(Figure f)
+{
+    return static_cast<size_t>(f);
+}
+
+constexpr auto NUM_FIGURES = figureIndex(Figure::NONE) - figureIndex(Figure::PAWN);
 
 static constexpr Figure figure(Square s)
 {

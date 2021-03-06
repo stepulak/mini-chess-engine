@@ -51,6 +51,10 @@ public:
     int apply(const Move& m);
     void undo(int numUndoMoves);
 
+    static constexpr bool validIndex(int x, int y) {
+        return x >= 0 && y >= 0 && x < WIDTH && y < HEIGHT;
+    }
+
 private:
     std::array<Square, 64u> _board;
     UndoMove _undoMoves;
