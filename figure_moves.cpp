@@ -49,15 +49,16 @@ void straightMoves(Func&& f)
     }
 }
 
-Square makeFigureColorFromPosition(Figure f, const Board& b, int x, int y)
+Square makeFigureSameColorWithPosition(Figure f, const Board& b, int x, int y)
 {
     const auto col = color(b.get(x, y));
-    const auto toSq = square(f, col);
+    const auto sq = square(f, col);
+    return sq;
 }
 
 void bishopMoves(MOVES_GENERATOR_ARGS)
 {
-    const auto sq = makeFigureColorFromPosition(Figure::BISHOP, b, x, y);
+    const auto sq = makeFigureSameColorWithPosition(Figure::BISHOP, b, x, y);
     diagonalMoves([&](int dx, int dy) {
         moveInDirection(moves, b, sq, x, y, dx, dy);
     });
@@ -65,7 +66,7 @@ void bishopMoves(MOVES_GENERATOR_ARGS)
 
 void rookMoves(MOVES_GENERATOR_ARGS)
 {
-    const auto sq = makeFigureColorFromPosition(Figure::ROOK, b, x, y);
+    const auto sq = makeFigureSameColorWithPosition(Figure::ROOK, b, x, y);
     straightMoves([&](int dx, int dy) {
         moveInDirection(moves, b, sq, x, y, dx, dy);
     });
@@ -85,7 +86,7 @@ void forEachDirection(Func&& f)
 
 void queenMoves(MOVES_GENERATOR_ARGS)
 {
-    const auto sq = makeFigureColorFromPosition(Figure::QUEEN, b, x, y);
+    const auto sq = makeFigureSameColorWithPosition(Figure::QUEEN, b, x, y);
     forEachDirection([&](int dx, int dy) {
         moveInDirection(moves, b, sq, x, y, dx, dy);
     });
@@ -93,7 +94,7 @@ void queenMoves(MOVES_GENERATOR_ARGS)
 
 void kingMoves(MOVES_GENERATOR_ARGS)
 {
-    const auto sq = makeFigureColorFromPosition(Figure::KING, b, x, y);
+    const auto sq = makeFigureSameColorWithPosition(Figure::KING, b, x, y);
     forEachDirection([&](int dx, int dy) {
         moveInDirection(moves, b, sq, x, y, dx, dy, 1);
     });
@@ -101,7 +102,7 @@ void kingMoves(MOVES_GENERATOR_ARGS)
 
 void kingMovesIdle(MOVES_GENERATOR_ARGS)
 {
-    const auto sq = makeFigureColorFromPosition(Figure::KING, b, x, y);
+    const auto sq = makeFigureSameColorWithPosition(Figure::KING, b, x, y);
 
     kingMoves(moves, b, x, y);
 
@@ -126,12 +127,15 @@ void kingMovesIdle(MOVES_GENERATOR_ARGS)
 
 void knightMoves(MOVES_GENERATOR_ARGS)
 {
+    const auto fromSq = b.get(x, y);
+    const auto toSq = square(Figure::KNIGHT, color(fromSq));
+
     straightMoves([&](int dx, int dy) {
         for (int i = -1; i <= 1; i += 2) {
             const auto mx = x + dx * 2 + dy * i;
             const auto my = y + dy * 2 + dx * i;
-            if (Board::validIndex(mx, my) && !own(sq, b.get(mx, my))) {
-                moves.emplace_back(Move { x, y, mx, my, Figure::KNIGHT });
+            if (Board::validIndex(mx, my) && !own(fromSq, b.get(mx, my))) {
+                moves.emplace_back(Move { x, y, mx, my, toSq });
             }
         }
     });
@@ -195,6 +199,6 @@ const std::array<MoveFunction, NUM_FIGURES> FIGURE_MOVES = {
 
 } // namespace
 
-Moves figureMoves(Figure f, const Board& b, Square sq, int x, int y)
+Moves figureMoves(Figure f, const Board& b, int x, int y)
 {
 }

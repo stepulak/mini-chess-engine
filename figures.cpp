@@ -94,8 +94,8 @@ const std::array<int, NUM_FIGURES> FIGURE_SCORE = {
     479, // rook
     479, // rook idle
     929, // queen
-    60000, // king
-    60000 // king idle
+    100000, // king
+    100000 // king idle
 };
 
 const std::array<std::string, NUM_FIGURES* 2u> FIGURE_SYMBOLS = {

@@ -32,24 +32,30 @@ public:
 
     Board();
 
-    Square get(int x, int y) const;
-    Square get(int pos) const;
-    Square set(int x, int y, Square s);
-    Square set(int pos, Square s);
+    constexpr Square get(int pos) const {
+        return _board[pos];
+    }
 
-    /*template<typename Fn>
-    void foreach(Fn&& f) {
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                f(get(x, y), x, y);
-            }
-        }
-    }*/
+    constexpr Square get(int x, int y) const {
+        return get(position(x, y));
+    }
 
-    int score() const;
+    constexpr void set(int pos, Square s) {
+        _board[pos] = s;
+    }
 
-    int apply(const Move& m);
-    void undo(int numUndoMoves);
+    constexpr void set(int x, int y, Square s) {
+        set(position(x, y), s);
+    }
+
+    int score() const {
+        return _score;
+    }
+
+    bool kingCaptured() const;
+
+    size_t apply(const Move& m);
+    void undo(size_t numUndoMoves);
 
     static constexpr bool validIndex(int x, int y) {
         return x >= 0 && y >= 0 && x < WIDTH && y < HEIGHT;
@@ -57,7 +63,7 @@ public:
 
 private:
     std::array<Square, 64u> _board;
-    UndoMove _undoMoves;
+    UndoMoves _undoMoves;
     int _score = 0;
 
     // Using int instead of size_t everywhere due to negative integers
