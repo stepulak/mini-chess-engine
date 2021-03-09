@@ -4,6 +4,7 @@
 #include "move.hpp"
 
 #include <array>
+#include <bitset>
 
 class Board {
 public:
@@ -29,8 +30,8 @@ public:
     private:
         const Board& _board;
         const Color _color;
-        int x = 0;
-        int y = 0;
+        int _x = 0;
+        int _y = 0;
 
         void nextSquare();
     };
@@ -45,13 +46,11 @@ public:
         return get(position(x, y));
     }
 
-    void set(int pos, Square s) {
-        _board[pos] = s;
+    void set(int x, int y, Square sq) {
+        set(position(x, y), sq);
     }
 
-    void set(int x, int y, Square s) {
-        set(position(x, y), s);
-    }
+    void set(int pos, Square sq);
 
     int score() const {
         return _score;
@@ -65,6 +64,14 @@ public:
     size_t apply(const Move& m);
     void undo(size_t numUndoMoves);
 
+    size_t hash() const {
+        return _hash;
+    }
+
+    bool operator==(const Board& b) const {
+        return b._hash == _hash && b._board == _board;
+    }
+
     static constexpr bool validIndex(int x, int y) {
         return x >= 0 && y >= 0 && x < WIDTH && y < HEIGHT;
     }
@@ -72,6 +79,7 @@ public:
 private:
     BoardType _board;
     UndoMoves _undoMoves;
+    size_t _hash = 0u;
     int _score = 0;
 
     // Using int instead of size_t everywhere due to negative integers

@@ -153,6 +153,8 @@ bool promotePawn(Color pawnCol, int y)
 
 void pawnMoves(MOVES_GENERATOR_ARGS)
 {
+    // TODO capture en passant
+
     const auto fromSq = b.get(x, y);
     const auto col = color(fromSq);
     const auto dir = pawnDirection(col);
@@ -201,4 +203,7 @@ const std::array<MoveFunction, NUM_FIGURES> FIGURE_MOVES = {
 
 Moves figureMoves(Figure f, const Board& b, int x, int y)
 {
+    Moves moves;
+    FIGURE_MOVES[figureIndex(f)](moves, b, x, y);
+    return moves;
 }

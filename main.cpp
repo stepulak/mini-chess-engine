@@ -9,10 +9,16 @@
 #include <optional>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <iostream>
 #include <optional>
 
-/*
+struct BoardHash {
+    size_t operator()(const Board& b) const {
+        return b.hash();
+    }
+};
+
 class TranspositionTable {
 public:
     struct Value {
@@ -24,7 +30,7 @@ public:
 
     TranspositionTable() = default;
 
-    std::optional<Value> get(const Board::BoardType& b) const
+    std::optional<Value> get(const Board& b) const
     {
         const auto it = _table.find(b);
         if (it == _table.end()) {
@@ -33,8 +39,9 @@ public:
         return std::make_optional(it->second);
     }
 
-    void set(const Board::BoardType& b, Value v)
+    void set(const Board& b, Value v)
     {
+        if (size() > 1e7) { clear(); }
         _table[b] = v;
     }
 
@@ -49,14 +56,14 @@ public:
     }
 
 private:
-    std::unordered_map<Board::BoardType, Value> _table;
+    std::unordered_map<Board, Value, BoardHash> _table;
 };
 
 class HistoryStats {
 public:
     HistoryStats() = default;
 
-    size_t get(const Board::BoardType& b) const
+    size_t get(const Board& b) const
     {
         const auto it = _stats.find(b);
         if (it == _stats.end()) {
@@ -65,18 +72,17 @@ public:
         return it->second;
     }
 
-    void inc(const Board::BoardType& b)
+    void inc(const Board& b)
     {
         _stats[b]++;
     }
 
 private:
-    std::unordered_map<Board::BoardType, size_t> _stats;
+    std::unordered_map<Board, size_t, BoardHash> _stats;
 };
 
 static TranspositionTable tt;
 static HistoryStats hstats;
-*/
 
 int min(int s1, int s2)
 {
@@ -108,22 +114,8 @@ const int MOVE_LIM_BASE = 150;
 
 int negamax(Board& b, Color c, int alpha, int beta, bool maxing, size_t depth) {
     if (b.kingCaptured() || depth <= 0) {
-        return b.score() * (maxing ? 1 : -1);
+        return b.score();
     }
-    /*
-    if (depth <= 3) {
-        int lim = MOVE_LIM_BASE * int(4u - depth);
-        if (maxing && b.score() > lim) {
-            goto cont;
-        } else if (!maxing && b.score() < -lim) {
-            goto cont;
-        } else {
-            return b.score() * (maxing ? 1 : -1);
-        }
-    }
-
-cont:*/
-
     nodes++;
 
     const auto alphaOrig = alpha;
@@ -131,7 +123,7 @@ cont:*/
     int score = MIN;
 
     /*
-    const auto it = tt.get(b.bitboard());
+    const auto it = tt.get(b);
     if (it && it->depth >= depth) {
         bhit++;
         const bool ai = inInterval(alpha, int(it->alpha*1), int(it->beta*1));
@@ -151,8 +143,9 @@ cont:*/
             beta = it->beta;
         }
     }
+    */
 
-    ttmiss++;*/
+    ttmiss++;
 
     for (auto generator = b.moveGenerator(c); !generator.ended();) {
         for (const auto& m : generator.nextMoves()) {
@@ -168,7 +161,8 @@ cont:*/
 
 end:
 
-    /*if (it && it->depth > depth) {
+    /*
+    if (it && it->depth > depth) {
         return score;
     }
 
@@ -177,7 +171,8 @@ end:
     tv.score = score;
     tv.alpha = alphaOrig;
     tv.beta = betaOrig;
-    tt.set(b.bitboard(), tv);*/
+    tt.set(b, tv);
+*/
 
     return score;
 }
@@ -195,12 +190,12 @@ std::optional<Move> bestMove_(Board& b, Color c, size_t depth)
     while(!generator.ended()) {
         for (const auto& m : generator.nextMoves()) {
             int undos = b.apply(m);
-            /*if (hstats.get(b.bitboard()) == 2u) {
+            if (hstats.get(b) == 2u) {
                 // 3-fold repetition
                 // skip this move
                 b.undo(undos);
                 continue;
-            }*/
+            }
             const auto score = -negamax(b, enemyColor(c), MIN, MAX, depth % 2 == 0, depth - 1u);
             if (score > bestScore) {
                 bestScore = score;
@@ -217,7 +212,7 @@ std::optional<Move> bestMove_(Board& b, Color c, size_t depth)
     return std::make_optional(bestMove);
 }
 
-std::optional<Move> bestMove(Board& b, Color c, size_t depth = 4u)
+std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
 {
     std::optional<Move> bm;
     for (size_t d = depth; d <= depth; d++) {
@@ -248,21 +243,22 @@ int main()
             m.to.y = move[3] - '1';
             m.toSq = b.get(m.from.x, m.from.y);
 
-            /*if (m.figure == KING_NOT_MOVED) {
-                if (color(from) == WHITE) {
-                    if (m.tY == 0 && m.tX == 6 && figure(b.get(7, 0)) == ROOK_NOT_MOVED) {
-                        b.applyMove(Move { 7, 0, 5, 0, ROOK_NOT_MOVED });
-                    } else if (m.tY == 0 && m.tX == 2 && figure(b.get(0, 0)) == ROOK_NOT_MOVED) {
-                        b.applyMove(Move { 0, 0, 3, 0, ROOK_NOT_MOVED });
+            if (figure(m.toSq) == Figure::KING_IDLE) {
+                    const auto sq =  square(Figure::ROOK_IDLE, color(m.toSq));
+                if (color(m.toSq) == Color::WHITE) {
+                    if (m.to.y == 0 && m.to.x == 6 && figure(b.get(7, 0)) == Figure::ROOK_IDLE) {
+                        b.apply(Move { 7, 0, 5, 0, sq });
+                    } else if (m.to.y == 0 && m.to.x == 2 && figure(b.get(0, 0)) == Figure::ROOK_IDLE) {
+                        b.apply(Move { 0, 0, 3, 0, sq });
                     }
                 } else {
-                    if (m.tY == 7 && m.tX == 6 && figure(b.get(7, 7)) == ROOK_NOT_MOVED) {
-                        b.applyMove(Move { 7, 7, 5, 7, ROOK_NOT_MOVED });
-                    } else if (m.tY == 7 && m.tX == 2 && figure(b.get(0, 7)) == ROOK_NOT_MOVED) {
-                        b.applyMove(Move { 0, 7, 3, 7, ROOK_NOT_MOVED });
+                    if (m.to.y == 7 && m.to.x == 6 && figure(b.get(7, 7)) == Figure::ROOK_IDLE) {
+                        b.apply(Move { 7, 7, 5, 7, sq });
+                    } else if (m.to.y == 7 && m.to.x == 2 && figure(b.get(0, 7)) == Figure::ROOK_IDLE) {
+                        b.apply(Move { 0, 7, 3, 7, sq });
                     }
                 }
-            }*/
+            }
             b.apply(m);
             computerPlays = true;
         } else {
@@ -279,7 +275,7 @@ int main()
             std::cout << "MOVE: " << char(m->from.x + 'a') << (m->from.y + 1) << char(m->to.x + 'a') << (m->to.y + 1) << std::endl;
 
             b.apply(*m);
-            //hstats.inc(b.bitboard());
+            hstats.inc(b);
         }
         c = enemyColor(c);
         std::cout << b << std::endl;

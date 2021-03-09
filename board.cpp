@@ -11,13 +11,14 @@ Board::MoveGenerator::MoveGenerator(const Board& b, Color c)
 
 bool Board::MoveGenerator::ended() const
 {
-    return y >= Board::HEIGHT;
+    return _y >= Board::HEIGHT;
 }
 
 Moves Board::MoveGenerator::nextMoves()
 {
     while (!ended()) {
-        const auto sq = _board.get(x, y);
+        //std::cout << _x << "; " << _y << std::endl;
+        const auto sq = _board.get(_x, _y);
         if (color(sq) != _color) {
             nextSquare();
             continue;
@@ -27,17 +28,19 @@ Moves Board::MoveGenerator::nextMoves()
             nextSquare();
             continue;
         }
-        return figureMoves(f, _board, x, y);
+        const auto moves = figureMoves(f, _board, _x, _y);
+        nextSquare();
+        return moves;
     }
     return {};
 }
 
 void Board::MoveGenerator::nextSquare()
 {
-    x++;
-    if (x >= Board::WIDTH) {
-        x = 0;
-        y++;
+    _x++;
+    if (_x >= Board::WIDTH) {
+        _x = 0;
+        _y++;
     }
 }
 
@@ -71,6 +74,18 @@ Board::Board()
     set(4, 7, square(Figure::KING_IDLE, Color::BLACK));
 }
 
+void Board::set(int pos, Square sq)
+{
+    _board[pos] = sq;
+
+    //_board[pos] = s;
+    if (sq == EMPTY_SQUARE) {
+        _hash &= ~(1 << pos);
+    } else {
+        _hash |= (1 << pos);
+    }
+}
+
 bool Board::kingCaptured() const
 {
     return std::abs(_score) > 80000;
@@ -82,8 +97,8 @@ size_t Board::apply(const Move& m)
     const auto toSq = get(m.to.x, m.to.y);
     const auto fromSqCol = color(fromSq);
     const auto fromSqFig = figure(fromSq);
-    const auto toSqCol = color(fromSq);
-    const auto toSqFig = figure(fromSq);
+    const auto toSqCol = color(toSq);
+    const auto toSqFig = figure(toSq);
 
     _undoMoves.emplace_back(UndoMove { m.from, m.to, fromSq, toSq, _score });
     _score -= figureScore(fromSqFig, fromSqCol, position(m.from.x, m.from.y));
@@ -92,7 +107,7 @@ size_t Board::apply(const Move& m)
     set(m.to.x, m.to.y, m.toSq);
     set(m.from.x, m.from.y, EMPTY_SQUARE);
 
-    _score += figureScore(toSqFig, toSqCol, position(m.to.x, m.to.y));
+    _score += figureScore(figure(m.toSq), color(m.toSq), position(m.to.x, m.to.y));
 
     if (m.castling) {
         int fx = (m.from.x < m.to.x) ? 7 : 0;
