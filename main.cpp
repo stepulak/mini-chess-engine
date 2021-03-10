@@ -102,50 +102,11 @@ bool inInterval(int v, int ia, int ib)
 const int MIN = -9999999;
 const int MAX = 9999999;
 
-int tthit = 0;
-int bhit = 0;
-int aihit = 0;
-int bihit = 0;
-int mhit = 0;
-int ttmiss = 0;
-int nodes = 0;
-
-const int MOVE_LIM_BASE = 150;
-
 int negamax(Board& b, Color c, int alpha, int beta, bool maxing, size_t depth) {
-    if (b.kingCaptured() || depth <= 0) {
-        return b.score();
+    if (b.kingCaptured() || depth == 0) {
+        return b.score() * (maxing ? 1 : -1);
     }
-    nodes++;
-
-    const auto alphaOrig = alpha;
-    const auto betaOrig = beta;
     int score = MIN;
-
-    /*
-    const auto it = tt.get(b);
-    if (it && it->depth >= depth) {
-        bhit++;
-        const bool ai = inInterval(alpha, int(it->alpha*1), int(it->beta*1));
-        const auto bi = inInterval(beta, int(it->alpha*1), int(it->beta*1));
-
-        if (ai && bi) {
-            tthit++;
-            return it->score;
-        }
-        if (ai) {
-            aihit++;
-            score = it->score;
-            alpha = it->alpha;
-        } else if (bi) {
-            bihit++;
-            score = it->score;
-            beta = it->beta;
-        }
-    }
-    */
-
-    ttmiss++;
 
     for (auto generator = b.moveGenerator(c); !generator.ended();) {
         for (const auto& m : generator.nextMoves()) {
@@ -154,30 +115,15 @@ int negamax(Board& b, Color c, int alpha, int beta, bool maxing, size_t depth) {
             b.undo(undos);
             alpha = max(alpha, score);
             if (alpha >= beta) {
-                goto end;
+                return score;
             }
         }
     }
 
-end:
-
-    /*
-    if (it && it->depth > depth) {
-        return score;
-    }
-
-    TranspositionTable::Value tv;
-    tv.depth = depth;
-    tv.score = score;
-    tv.alpha = alphaOrig;
-    tv.beta = betaOrig;
-    tt.set(b, tv);
-*/
-
     return score;
 }
 
-std::optional<Move> bestMove_(Board& b, Color c, size_t depth)
+std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
 {
     auto generator = b.moveGenerator(c);
     if (generator.ended()) {
@@ -210,15 +156,6 @@ std::optional<Move> bestMove_(Board& b, Color c, size_t depth)
     }
 
     return std::make_optional(bestMove);
-}
-
-std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
-{
-    std::optional<Move> bm;
-    for (size_t d = depth; d <= depth; d++) {
-        bm = bestMove_(b, c, d);
-    }
-    return bm;
 }
 
 int main()
@@ -279,13 +216,6 @@ int main()
         }
         c = enemyColor(c);
         std::cout << b << std::endl;
-        std::cout << "TTHIT: " << tthit << std::endl;
-        std::cout << "BHIT: " << bhit << std::endl;
-        std::cout << "AIHIT: " << aihit << std::endl;
-        std::cout << "BIHIT: " << bihit << std::endl;
-        std::cout << "MHIT: " << mhit << std::endl;
-        std::cout << "TTMISS: " << ttmiss << std::endl;
-        std::cout << "NODES: " << nodes << std::endl;
         std::cout << std::endl
                   << std::endl;
     }
