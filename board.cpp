@@ -88,7 +88,7 @@ void Board::set(int pos, Square sq)
 
 bool Board::kingCaptured() const
 {
-    return std::abs(_score) > 80000;
+    return std::abs(_score) > 70000;
 }
 
 size_t Board::apply(const Move& m)

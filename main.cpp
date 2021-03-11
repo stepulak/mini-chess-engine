@@ -167,6 +167,7 @@ int main()
     bool computerPlays = true;
 
     while (true) {
+        std::cout << "BOARD SCORE: " << b.score() << std::endl;
         std::cout << "NOW PLAYS: " << (c == Color::WHITE ? "white" : "black") << std::endl;
 
         if (!computerPlays) {
