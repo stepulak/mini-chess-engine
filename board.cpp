@@ -9,15 +9,9 @@ Board::MoveGenerator::MoveGenerator(const Board& b, Color c)
 {
 }
 
-bool Board::MoveGenerator::ended() const
+Moves Board::MoveGenerator::movesChunk()
 {
-    return _y >= Board::HEIGHT;
-}
-
-Moves Board::MoveGenerator::nextMoves()
-{
-    while (!ended()) {
-        //std::cout << _x << "; " << _y << std::endl;
+    while (hasMoves()) {
         const auto sq = _board.get(_x, _y);
         if (color(sq) != _color) {
             nextSquare();
@@ -78,7 +72,6 @@ void Board::set(int pos, Square sq)
 {
     _board[pos] = sq;
 
-    //_board[pos] = s;
     if (sq == EMPTY_SQUARE) {
         _hash &= ~(1 << pos);
     } else {
@@ -86,12 +79,7 @@ void Board::set(int pos, Square sq)
     }
 }
 
-bool Board::kingCaptured() const
-{
-    return std::abs(_score) > 70000;
-}
-
-size_t Board::apply(const Move& m)
+size_t Board::applyMove(const Move& m)
 {
     const auto fromSq = get(m.from.x, m.from.y);
     const auto toSq = get(m.to.x, m.to.y);
@@ -113,13 +101,13 @@ size_t Board::apply(const Move& m)
         int fx = (m.from.x < m.to.x) ? 7 : 0;
         int tx = m.to.x - (m.from.x < m.to.x ? 1 : -1);
         int y = m.to.y;
-        return apply(Move { fx, y, tx, m.to.y, square(Figure::ROOK, fromSqCol) }) + 1u;
+        return applyMove(Move { fx, y, tx, m.to.y, square(Figure::ROOK, fromSqCol) }) + 1u;
     }
 
     return 1u;
 }
 
-void Board::undo(size_t numUndoMoves)
+void Board::undoMove(size_t numUndoMoves)
 {
     for (size_t i = 0u; i < numUndoMoves; i++) {
         if (_undoMoves.empty()) {
@@ -146,8 +134,8 @@ std::ostream& operator<<(std::ostream& os, const Board& b)
         }
         std::cout << std::endl;
     }
-    os << std::endl
-       << "    ";
+    os << std::endl;
+    os << "    ";
     for (int x = 0; x < b.WIDTH; x++) {
         std::cout << static_cast<char>(x + 'a') << '.';
     }

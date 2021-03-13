@@ -1,119 +1,35 @@
 
 #include "board.hpp"
+#include "board_stats.hpp"
 #include "figure_moves.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstring>
-#include <optional>
-#include <string>
-#include <unordered_set>
-#include <unordered_map>
 #include <iostream>
 #include <optional>
+#include <string>
 
-struct BoardHash {
-    size_t operator()(const Board& b) const {
-        return b.hash();
-    }
-};
+static BoardStats bstats;
 
-class TranspositionTable {
-public:
-    struct Value {
-        size_t depth;
-        int score;
-        int alpha;
-        int beta;
-    };
+const int MIN = std::numeric_limits<int>::min() + 1;
+const int MAX = std::numeric_limits<int>::max() - 1;
 
-    TranspositionTable() = default;
-
-    std::optional<Value> get(const Board& b) const
-    {
-        const auto it = _table.find(b);
-        if (it == _table.end()) {
-            return {};
-        }
-        return std::make_optional(it->second);
-    }
-
-    void set(const Board& b, Value v)
-    {
-        if (size() > 1e7) { clear(); }
-        _table[b] = v;
-    }
-
-    size_t size() const
-    {
-        return _table.size();
-    }
-
-    void clear()
-    {
-        _table.clear();
-    }
-
-private:
-    std::unordered_map<Board, Value, BoardHash> _table;
-};
-
-class HistoryStats {
-public:
-    HistoryStats() = default;
-
-    size_t get(const Board& b) const
-    {
-        const auto it = _stats.find(b);
-        if (it == _stats.end()) {
-            return 0;
-        }
-        return it->second;
-    }
-
-    void inc(const Board& b)
-    {
-        _stats[b]++;
-    }
-
-private:
-    std::unordered_map<Board, size_t, BoardHash> _stats;
-};
-
-static TranspositionTable tt;
-static HistoryStats hstats;
-
-int min(int s1, int s2)
+int negamax(Board& b, Color c, int alpha, int beta, bool maxing, size_t depth)
 {
-    return std::min(s1, s2);
-}
-
-int max(int s1, int s2)
-{
-    return std::max(s1, s2);
-}
-
-bool inInterval(int v, int ia, int ib)
-{
-    return v >= ia && v < ib;
-}
-
-const int MIN = -9999999;
-const int MAX = 9999999;
-
-int negamax(Board& b, Color c, int alpha, int beta, bool maxing, size_t depth) {
     if (b.kingCaptured() || depth == 0) {
         return b.score() * (maxing ? 1 : -1);
     }
     int score = MIN;
+    auto generator = b.moveGenerator(c);
 
-    for (auto generator = b.moveGenerator(c); !generator.ended();) {
-        for (const auto& m : generator.nextMoves()) {
-            int undos = b.apply(m);
-            score = max(score, -negamax(b, enemyColor(c), -beta, -alpha, maxing, depth-1));
-            b.undo(undos);
-            alpha = max(alpha, score);
+    while (generator.hasMoves()) {
+        for (const auto& m : generator.movesChunk()) {
+            int undos = b.applyMove(m);
+            score = std::max(score, -negamax(b, enemyColor(c), -beta, -alpha, maxing, depth - 1));
+            b.undoMove(undos);
+            alpha = std::max(alpha, score);
             if (alpha >= beta) {
                 return score;
             }
@@ -126,20 +42,19 @@ int negamax(Board& b, Color c, int alpha, int beta, bool maxing, size_t depth) {
 std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
 {
     auto generator = b.moveGenerator(c);
-    if (generator.ended()) {
+    if (!generator.hasMoves()) {
         return {};
     }
 
     int bestScore = MIN;
-    Move bestMove;
+    std::optional<Move> bestMove;
 
-    while(!generator.ended()) {
-        for (const auto& m : generator.nextMoves()) {
-            int undos = b.apply(m);
-            if (hstats.get(b) == 2u) {
-                // 3-fold repetition
+    while (generator.hasMoves()) {
+        for (const auto& m : generator.movesChunk()) {
+            int undos = b.applyMove(m);
+            if (bstats.threeFoldRepetition(b)) {
                 // skip this move
-                b.undo(undos);
+                b.undoMove(undos);
                 continue;
             }
             const auto score = -negamax(b, enemyColor(c), MIN, MAX, depth % 2 == 0, depth - 1u);
@@ -147,21 +62,18 @@ std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
                 bestScore = score;
                 bestMove = m;
             }
-            b.undo(undos);
+            b.undoMove(undos);
         }
     }
 
-    if (bestScore == MIN) {
-        return {};
-    }
-
-    return std::make_optional(bestMove);
+    return bestMove;
 }
 
 int main()
 {
     Board b;
-    std::cout << b << std::endl << std::endl;
+    std::cout << b << std::endl
+              << std::endl;
 
     auto c = Color::WHITE;
     bool computerPlays = true;
@@ -182,22 +94,22 @@ int main()
             m.toSq = b.get(m.from.x, m.from.y);
 
             if (figure(m.toSq) == Figure::KING_IDLE) {
-                    const auto sq =  square(Figure::ROOK_IDLE, color(m.toSq));
+                const auto sq = square(Figure::ROOK_IDLE, color(m.toSq));
                 if (color(m.toSq) == Color::WHITE) {
                     if (m.to.y == 0 && m.to.x == 6 && figure(b.get(7, 0)) == Figure::ROOK_IDLE) {
-                        b.apply(Move { 7, 0, 5, 0, sq });
+                        b.applyMove(Move { 7, 0, 5, 0, sq });
                     } else if (m.to.y == 0 && m.to.x == 2 && figure(b.get(0, 0)) == Figure::ROOK_IDLE) {
-                        b.apply(Move { 0, 0, 3, 0, sq });
+                        b.applyMove(Move { 0, 0, 3, 0, sq });
                     }
                 } else {
                     if (m.to.y == 7 && m.to.x == 6 && figure(b.get(7, 7)) == Figure::ROOK_IDLE) {
-                        b.apply(Move { 7, 7, 5, 7, sq });
+                        b.applyMove(Move { 7, 7, 5, 7, sq });
                     } else if (m.to.y == 7 && m.to.x == 2 && figure(b.get(0, 7)) == Figure::ROOK_IDLE) {
-                        b.apply(Move { 0, 7, 3, 7, sq });
+                        b.applyMove(Move { 0, 7, 3, 7, sq });
                     }
                 }
             }
-            b.apply(m);
+            b.applyMove(m);
             computerPlays = true;
         } else {
             computerPlays = false;
@@ -212,8 +124,8 @@ int main()
             }
             std::cout << "MOVE: " << char(m->from.x + 'a') << (m->from.y + 1) << char(m->to.x + 'a') << (m->to.y + 1) << std::endl;
 
-            b.apply(*m);
-            hstats.inc(b);
+            b.applyMove(*m);
+            bstats.boardVisit(b);
         }
         c = enemyColor(c);
         std::cout << b << std::endl;
