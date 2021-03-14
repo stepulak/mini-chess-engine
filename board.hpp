@@ -36,8 +36,10 @@ public:
     };
 
     Board();
-    Board(const Board&) = delete;
-    Board& operator=(const Board&) = delete;
+    
+    // TODO DELETE THIS:
+    //Board(const Board&) = delete;
+    //Board& operator=(const Board&) = delete;
 
     constexpr Square get(int pos) const
     {

@@ -110,10 +110,12 @@ int main()
                 }
             }
             b.applyMove(m);
+            bstats.lastVisit(b);
             computerPlays = true;
         } else {
             computerPlays = false;
             const auto now = std::chrono::system_clock::now();
+            std::cout << "ESTIMATED DEPTH: " << bstats.minimaxDepth() << std::endl;
             const auto m = bestMove(b, c);
             const auto dur = std::chrono::duration<double>(std::chrono::system_clock::now() - now);
             std::cout << "DURATION: " << dur.count() << std::endl;
@@ -125,7 +127,7 @@ int main()
             std::cout << "MOVE: " << char(m->from.x + 'a') << (m->from.y + 1) << char(m->to.x + 'a') << (m->to.y + 1) << std::endl;
 
             b.applyMove(*m);
-            bstats.boardVisit(b);
+            bstats.lastVisit(b);
         }
         c = enemyColor(c);
         std::cout << b << std::endl;
