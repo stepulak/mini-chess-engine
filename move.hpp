@@ -30,6 +30,8 @@ struct MoveBase {
         , toSq(toSq_)
     {
     }
+
+    virtual ~MoveBase() = default;
 };
 
 struct Move : MoveBase {

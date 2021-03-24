@@ -102,7 +102,7 @@ private:
     // Using int instead of size_t everywhere due to negative integers
     static constexpr int position(int x, int y)
     {
-        return y * 8 + x;
+        return y * WIDTH + x;
     }
 };
 

@@ -120,8 +120,8 @@ void kingMovesIdle(MOVES_GENERATOR_ARGS)
         moves.emplace_back(Move { x, y, 2, y, sq, true });
     }
     // Right castling
-    if (figure(b.get(Board::SIZE - 1u, y)) == Figure::ROOK_IDLE && pathClear(x + 1, Board::SIZE)) {
-        moves.emplace_back(Move { x, y, Board::SIZE - 2u, y, sq, true });
+    if (figure(b.get(Board::WIDTH - 1u, y)) == Figure::ROOK_IDLE && pathClear(x + 1, Board::WIDTH)) {
+        moves.emplace_back(Move { x, y, Board::WIDTH - 2u, y, sq, true });
     }
 }
 

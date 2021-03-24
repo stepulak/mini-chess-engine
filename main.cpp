@@ -10,36 +10,55 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 static BoardStats bstats;
 
 const int MIN = std::numeric_limits<int>::min() + 1;
 const int MAX = std::numeric_limits<int>::max() - 1;
 
-int negamax(Board& b, Color c, int alpha, int beta, bool maxing, size_t depth)
+std::atomic_bool stop = false;
+
+// TODO:
+// Negascout class
+// Non-blocking Timer class
+// 
+
+int negascout(Board& b, Color c, int alpha, int beta, size_t depth)
 {
-    if (b.kingCaptured() || depth == 0) {
-        return b.score() * (maxing ? 1 : -1);
+    if (depth == 0 || b.kingCaptured() || stop) {
+        return b.score();
     }
     int score = MIN;
+    bool first = true;
     auto generator = b.moveGenerator(c);
 
     while (generator.hasMoves()) {
         for (const auto& m : generator.movesChunk()) {
             int undos = b.applyMove(m);
-            score = std::max(score, -negamax(b, enemyColor(c), -beta, -alpha, maxing, depth - 1));
+            if (first) {
+                score = -negascout(b, enemyColor(c), -beta, -alpha, depth-1);
+                first = false;
+            } else {
+                score = -negascout(b, enemyColor(c), -alpha-1, -alpha, depth-1);
+                if (alpha < score && score < beta) {
+                    score = -negascout(b, enemyColor(c), -beta, -score, depth-1);
+                }
+            }
             b.undoMove(undos);
             alpha = std::max(alpha, score);
             if (alpha >= beta) {
-                return score;
+                return alpha;
             }
         }
     }
 
-    return score;
+    return alpha;
 }
 
-std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
+std::optional<Move> bestMove_(Board& b, Color c, size_t depth = 6u)
 {
     auto generator = b.moveGenerator(c);
     if (!generator.hasMoves()) {
@@ -47,7 +66,7 @@ std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
     }
 
     int bestScore = MIN;
-    std::optional<Move> bestMove;
+    Move bestMove;
 
     while (generator.hasMoves()) {
         for (const auto& m : generator.movesChunk()) {
@@ -57,7 +76,7 @@ std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
                 b.undoMove(undos);
                 continue;
             }
-            const auto score = -negamax(b, enemyColor(c), MIN, MAX, depth % 2 == 0, depth - 1u);
+            const auto score = -negascout(b, enemyColor(c), MIN, MAX, depth - 1u);
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = m;
@@ -67,6 +86,20 @@ std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
     }
 
     return bestMove;
+}
+
+std::optional<Move> bestMove(Board& b, Color c, size_t depth = 6u)
+{
+    std::thread t([&] {
+        const auto now = std::chrono::system_clock::now();
+        while (2000 > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - now).count()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        //stop = true;
+        std::cout << "stopped" << std::endl;
+    });
+    t.join();
+    return bestMove_(b, c, depth);
 }
 
 int main()
@@ -87,6 +120,7 @@ int main()
             std::string move;
             std::cin >> move;
             Move m;
+            m.castling = false;
             m.from.x = move[0] - 'a';
             m.from.y = move[1] - '1';
             m.to.x = move[2] - 'a';
@@ -116,7 +150,7 @@ int main()
             computerPlays = false;
             const auto now = std::chrono::system_clock::now();
             std::cout << "ESTIMATED DEPTH: " << bstats.minimaxDepth() << std::endl;
-            const auto m = bestMove(b, c);
+            const auto m = bestMove(b, c, bstats.minimaxDepth());
             const auto dur = std::chrono::duration<double>(std::chrono::system_clock::now() - now);
             std::cout << "DURATION: " << dur.count() << std::endl;
 

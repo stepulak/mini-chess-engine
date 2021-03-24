@@ -3,6 +3,7 @@
 #include "board.hpp"
 
 #include <unordered_map>
+#include <cmath>
 
 #include <iostream> // todo remove
 
@@ -46,14 +47,14 @@ private:
             { Figure::PAWN_EN_PASSANT, 3 },
             { Figure::PAWN_IDLE, 4 },
             { Figure::KNIGHT, 8 },
-            { Figure::BISHOP, 16 },
-            { Figure::ROOK, 16 },
-            { Figure::ROOK_IDLE, 16 },
-            { Figure::QUEEN, 32 },
+            { Figure::BISHOP, 14 },
+            { Figure::ROOK, 14 },
+            { Figure::ROOK_IDLE, 14 },
+            { Figure::QUEEN, 31 },
             { Figure::KING_IDLE, 10 },
-            { Figure::KING, 10 },
+            { Figure::KING, 8 },
         };
-        const int maxscore = 2*(4*8+8*2+16*2+16*2+32+10);
+        const int maxscore = 2*(4*8+8*2+14*2+14*2+31+10);
         const int mindepth = 6u;
         int score = 0;
         for (int x = 0; x < 8; x++) {
@@ -65,11 +66,11 @@ private:
                 score += metrics.at(f);
             }
         }
-        //std::cout << "XXXSCORE: " << score << " " << ( mindepth * maxscore / score) << std::endl;
-        size_t depth = mindepth * maxscore / score;
-        if (depth % 2 == 1) {
+        size_t depth = 6u + 6u - (std::log(score) / std::log(2.57) - 0.01);
+        std::cout << (6u - (std::log(score) / std::log(2.57) - 0.01)) << std::endl;
+        /*if (depth % 2 == 1) {
             depth--;
-        }
+        }*/
         return depth;
     }
 };
