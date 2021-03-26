@@ -5,8 +5,7 @@
 
 namespace {
 
-#define MOVES_GENERATOR_ARGS \
-    Moves &moves, const Board &b, int x, int y
+#define MOVES_GENERATOR_ARGS Moves &moves, const Board &b, int x, int y
 
 void moveInDirection(Moves& moves, const Board& b, Square toSq, int x, int y, int dx, int dy, size_t steps = Board::SIZE)
 {
@@ -153,7 +152,9 @@ bool promotePawn(Color pawnCol, int y)
 
 void pawnMoves(MOVES_GENERATOR_ARGS)
 {
-    // TODO capture en passant
+    //
+    // TODO capture en passant!!
+    //
 
     const auto fromSq = b.get(x, y);
     const auto col = color(fromSq);
