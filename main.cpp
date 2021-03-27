@@ -1,18 +1,20 @@
 
+#include "ai.hpp"
 #include "board.hpp"
 #include "board_stats.hpp"
 #include "figure_moves.hpp"
+#include "timer.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstring>
 #include <iostream>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <thread>
-#include <mutex>
-#include <atomic>
 
 static BoardStats bstats;
 
@@ -58,13 +60,21 @@ int main()
                 }
             }
             b.applyMove(m);
-            bstats.lastVisit(b);
+            bstats.visit(b);
             computerPlays = true;
         } else {
             computerPlays = false;
             const auto now = std::chrono::system_clock::now();
-            std::cout << "ESTIMATED DEPTH: " << bstats.minimaxDepth() << std::endl;
-            const auto m = bestMove(b, c, bstats.minimaxDepth());
+
+            AI ai(b, c, bstats);
+            Timer t(2000u, [&] {
+                std::cout << "TIMER FINISHED!" << std::endl;
+                ai.stop();
+            });
+            ai.run();
+            t.stop();
+            const auto m = ai.bestMove();
+
             const auto dur = std::chrono::duration<double>(std::chrono::system_clock::now() - now);
             std::cout << "DURATION: " << dur.count() << std::endl;
 
@@ -75,7 +85,7 @@ int main()
             std::cout << "MOVE: " << char(m->from.x + 'a') << (m->from.y + 1) << char(m->to.x + 'a') << (m->to.y + 1) << std::endl;
 
             b.applyMove(*m);
-            bstats.lastVisit(b);
+            bstats.visit(b);
         }
         c = enemyColor(c);
         std::cout << b << std::endl;
