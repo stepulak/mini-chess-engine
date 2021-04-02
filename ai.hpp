@@ -19,7 +19,7 @@ private:
     using MoveAndScore = std::pair<Move, int>;
 
     // Negascout min, max depth
-    static constexpr size_t MIN_DEPTH = 6u;
+    static constexpr size_t MIN_DEPTH = 4u;
     static constexpr size_t MAX_DEPTH = 10u;
 
     Board& _board;

@@ -19,12 +19,10 @@ void AI::run()
     // Depth is increased by two = one ply
     for (size_t depth = MIN_DEPTH; depth <= MAX_DEPTH; depth += 2u) {
         const auto move = countBestMove(_board, _color, depth);
-        if (!move) {
+        if (!move || _stop) {
             continue;
         }
-        if (!_bestMove || move->second > _bestMove->second) {
-            _bestMove = move;
-        }
+        _bestMove = move;
     }
 }
 
