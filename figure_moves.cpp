@@ -152,10 +152,6 @@ bool promotePawn(Color pawnCol, int y)
 
 void pawnMoves(MOVES_GENERATOR_ARGS)
 {
-    //
-    // TODO capture en passant!!
-    //
-
     const auto fromSq = b.get(x, y);
     const auto col = color(fromSq);
     const auto dir = pawnDirection(col);
@@ -173,7 +169,7 @@ void pawnMoves(MOVES_GENERATOR_ARGS)
     }
 }
 
-void pawnMovesEnPassant(MOVES_GENERATOR_ARGS)
+void pawnMovesWithEnPassant(MOVES_GENERATOR_ARGS)
 {
     pawnMoves(moves, b, x, y);
 
@@ -190,14 +186,14 @@ using MoveFunction = std::function<void(MOVES_GENERATOR_ARGS)>;
 const std::array<MoveFunction, NUM_FIGURES> FIGURE_MOVES = {
     pawnMoves,
     pawnMoves, // pawn idle
-    pawnMovesEnPassant, // pawn idle
+    pawnMovesWithEnPassant, // pawn en passant
     knightMoves,
     bishopMoves,
     rookMoves,
     rookMoves, // rook idle
     queenMoves,
     kingMoves,
-    kingMovesIdle,
+    kingMovesIdle, // king idle
 };
 
 } // namespace

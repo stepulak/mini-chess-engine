@@ -73,6 +73,7 @@ int main()
             });
             ai.run();
             t.stop();
+            t.join();
             const auto m = ai.bestMove();
 
             const auto dur = std::chrono::duration<double>(std::chrono::system_clock::now() - now);

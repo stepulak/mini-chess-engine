@@ -36,10 +36,6 @@ public:
     };
 
     Board();
-    
-    // TODO DELETE THIS:
-    //Board(const Board&) = delete;
-    //Board& operator=(const Board&) = delete;
 
     constexpr Square get(int pos) const
     {
@@ -83,13 +79,13 @@ public:
         return b._hash == _hash && b._board == _board;
     }
 
+    size_t applyMove(const Move& m);
+    void undoMove(size_t numUndoMoves);
+
     static constexpr bool validIndex(int x, int y)
     {
         return x >= 0 && y >= 0 && x < WIDTH && y < HEIGHT;
     }
-
-    size_t applyMove(const Move& m);
-    void undoMove(size_t numUndoMoves);
 
 private:
     static constexpr auto KING_CAPTURED_MIN_SCORE = 70000;

@@ -5,8 +5,6 @@
 #include <mutex>
 #include <thread>
 
-#include <iostream>
-
 class Timer final {
 public:
     Timer(size_t sleepMilliseconds, const std::function<void()>& fn)
@@ -15,28 +13,28 @@ public:
             const auto start = system_clock::now();
             while (true) {
                 const auto duration = duration_cast<milliseconds>(system_clock::now() - start).count();
-                _mutex.lock();
-                if (_stop) {
-                    std::cout << "HERE!" << std::endl;
-                    break;
-                }
-                _mutex.unlock();
                 if (sleepMilliseconds <= duration) {
                     fn();
                     break;
                 }
                 std::this_thread::sleep_for(milliseconds(1));
+                std::scoped_lock lock(_mutex);
+                if (_stop) {
+                    break;
+                }
             }
-            std::cout << "STOPPING!" << std::endl;
         })
     {
     }
 
     void stop()
     {
-        _mutex.lock();
+        std::scoped_lock lock(_mutex);
         _stop = true;
-        _mutex.unlock();
+    }
+
+    void join()
+    {
         _thread.join();
     }
 
