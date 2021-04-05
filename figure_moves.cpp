@@ -204,3 +204,17 @@ Moves figureMoves(Figure f, const Board& b, int x, int y)
     FIGURE_MOVES[figureIndex(f)](moves, b, x, y);
     return moves;
 }
+
+bool figureMoveValid(const Move& m, const Board& b, Color c)
+{
+    if (!Board::validIndex(m.from.x, m.from.y) || !Board::validIndex(m.to.x, m.to.y)) {
+        return false;
+    }
+    const auto sq = b.get(m.from.x, m.from.y);
+    if (color(sq) != c) {
+        return false;
+    }
+    const auto f = figure(sq);
+    const auto moves = figureMoves(f, b, m.from.x, m.from.y);
+    return std::find(moves.begin(), moves.end(), m) != moves.end();
+}

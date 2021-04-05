@@ -15,6 +15,10 @@ struct Point {
         , y(y_)
     {
     }
+
+    bool operator==(const Point& p) const {
+        return x == p.x && y == p.y;
+    }
 };
 
 struct MoveBase {
@@ -32,6 +36,10 @@ struct MoveBase {
     }
 
     virtual ~MoveBase() = default;
+
+    bool operator==(const MoveBase& mb) const {
+        return from == mb.from && to == mb.to && toSq == mb.toSq;
+    }
 };
 
 struct Move : MoveBase {
@@ -48,6 +56,10 @@ struct Move : MoveBase {
     Move(int fx, int fy, int tx, int ty, Square toSq_, bool castling = false)
         : Move(Point { fx, fy }, Point { tx, ty }, toSq_, castling)
     {
+    }
+
+    bool operator==(const Move& m) const {
+        return MoveBase::operator==(m) && castling == m.castling;
     }
 };
 
