@@ -16,65 +16,75 @@ endgame:
     loss
 */
 
-Move parseMove(const std::string& str, const Board& board)
+namespace {
+
+inline bool pointValid(const Point& p)
 {
-    if (str.length() != 4u) {
-        throw std::runtime_error("invalid move");
-    }
-    Move m;
-    m.castling = false;
-    m.from.x = str[0] - 'a';
-    m.from.y = str[1] - '1';
-    m.to.x = str[2] - 'a';
-    m.to.y = str[3] - '1';
-    m.toSq = b.get(m.from.x, m.from.y);
+    return Board::validIndex(p.x, p.y);
+}
 
-    if (figure(m.toSq) == Figure::KING_IDLE) {
-        const auto sq = square(Figure::ROOK_IDLE, color(m.toSq));
-        if (color(m.toSq) == Color::WHITE) {
-            if (m.to.y == 0 && m.to.x == 6 && figure(b.get(7, 0)) == Figure::ROOK_IDLE) {
-                b.applyMove(Move { 7, 0, 5, 0, sq });
-            } else if (m.to.y == 0 && m.to.x == 2 && figure(b.get(0, 0)) == Figure::ROOK_IDLE) {
-                b.applyMove(Move { 0, 0, 3, 0, sq });
-            }
-        } else {
-            if (m.to.y == 7 && m.to.x == 6 && figure(b.get(7, 7)) == Figure::ROOK_IDLE) {
-                b.applyMove(Move { 7, 7, 5, 7, sq });
-            } else if (m.to.y == 7 && m.to.x == 2 && figure(b.get(0, 7)) == Figure::ROOK_IDLE) {
-                b.applyMove(Move { 0, 7, 3, 7, sq });
-            }
-        }
+bool detectCastling(const Point& from, const Point& to, const Board& board)
+{
+    if (figure(board.get(from.x, from.y)) != Figure::KING_IDLE) {
+        return false;
+    }
+    if (to.x == 6 && figure(board.get(7, to.y)) == Figure::ROOK_IDLE) {
+        return true;
+    }
+    if (to.x == 2 && figure(board.get(0, to.y)) == Figure::ROOK_IDLE) {
+        return true;
+    }
+    return false;
+}
+
+std::optional<Move> parseMove(const std::string& str, const Board& board)
+{
+    const Point from = { str[0] - 'a', str[1] - '1' };
+    const Point to = { str[2] - 'a', str[3] - '1' };
+
+    if (!pointValid(from) || !pointValid(to)) {
+        return {};
+    }
+    const auto castling = detectCastling(from, to, board);
+    const auto sq = board.get(from.x, from.y);
+    const auto fig = figure(sq);
+    const auto col = color(sq);
+
+    Figure resultFigure;
+
+    if (fig == Figure::KING_IDLE) {
+        resultFigure = Figure::KING;
+    } else if (fig == Figure::ROOK_IDLE) {
+        resultFigure = Figure::ROOK;
+    } else if (fig == Figure::PAWN_IDLE) {
+        resultFigure = std::abs(from.y - to.y) == 2 ? Figure::PAWN_EN_PASSANT : Figure::PAWN;
+    } else if (fig == Figure::PAWN_EN_PASSANT) {
+        resultFigure = Figure::PAWN;
     }
 
-    return m;
+    return Move { from, to, square(resultFigure, col), castling };
 }
 
 void playerPlays(Board& board, BoardStats& boardStats, Color col)
 {
-    Move m;
-
-    while(true) {
-        std::cout << "Your move: ";
+    while (true) {
+        std::cout << "Enter valid move: ";
         std::string input;
         std::cin >> input;
 
-        try {
-            m = parseMove(input, board);
-        } catch(const std::exception& ex) {
-            std::cout << "Parse error: " << ex.what() << std::endl;
+        const auto m = parseMove(input, board);
+        if (!m || !figureMoveValid(*m, board, col)) {
+            continue;
         }
-        if (!figureMoveValid(m, board, col)) {
-            // Parse OK, move valid
-            break;
-        }
-        std::cout << "Invalid move" << std::endl;
-    }
 
-    board.applyMove(m);
-    boardStats.visit(board);
+        board.applyMove(*m);
+        boardStats.visit(board);
+        break;
+    }
 }
 
-void computerPlays(Board& board, BoardStats& boardStats, Color col) {
+void computerPlays(Board& board, BoardStats& boardStats, Color col)
+{
     AI ai(board, col, boardStats);
     Timer timer(2000u, [&] {
         ai.stop();
@@ -92,6 +102,8 @@ void computerPlays(Board& board, BoardStats& boardStats, Color col) {
     board.applyMove(*m);
     boardStats.visit(board);
 }
+
+} // namespace
 
 int main()
 {
