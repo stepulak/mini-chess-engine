@@ -18,6 +18,8 @@ endgame:
 
 namespace {
 
+constexpr auto COMPUTER_PLAY_TIME = 2000u;
+
 inline bool pointValid(const Point& p)
 {
     return Board::validIndex(p.x, p.y);
@@ -86,21 +88,64 @@ void playerPlays(Board& board, BoardStats& boardStats, Color col)
 void computerPlays(Board& board, BoardStats& boardStats, Color col)
 {
     AI ai(board, col, boardStats);
-    Timer timer(2000u, [&] {
+    Timer timer(COMPUTER_PLAY_TIME, [&] {
         ai.stop();
     });
+
     ai.run();
     timer.stop();
+    // Wait for AI to finish
     timer.join();
 
     const auto m = ai.bestMove();
 
-    const auto dur = std::chrono::duration<double>(std::chrono::system_clock::now() - now);
     if (!m) {
-        throw std::runtime_error("")
+        throw std::runtime_error("");
     }
+
     board.applyMove(*m);
     boardStats.visit(board);
+}
+
+enum class GameStatus {
+    CONTINUE,
+    DRAW,
+    WIN_OR_LOSS
+};
+
+template<typename Fn>
+void forEachMove(Board& b, Color c, Fn&& f){
+    for(auto generator = board.moveGenerator(c); generator.hasMoves(); ) {
+        for (const auto& m : generator.movesChunk()) {
+            const auto undos = board.applyMove(m);
+            f(m);
+            board.undoMove(undos);
+        }
+    }
+}
+
+GameStatus gameStatus(Board& board, Color col)
+{
+    if (board.kingCaptured()) {
+        return GameStatus::WIN_OR_LOSS;
+    }
+    const auto ecol = enemyColor(col);
+    bool draw = true;
+
+    forEachMove(board, ecol, [&](const auto& m1) {
+        forEachMove(board, col, [&](const auto& m2) {
+            if (draw && !board.kingCaptured()) {
+                draw = false;
+                return;
+            }
+        });
+    });
+
+    if (draw) {
+        return GameStatus::DRAW;
+    }
+
+    return GameStatus::CONTINUE;
 }
 
 } // namespace

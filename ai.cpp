@@ -81,9 +81,8 @@ int AI::negascout(Board& b, Color c, int alpha, int beta, size_t depth, bool max
     }
     int score = MIN;
     bool first = true;
-    auto generator = b.moveGenerator(c);
 
-    while (generator.hasMoves()) {
+    for (auto generator = b.moveGenerator(c); generator.hasMoves();) {
         for (const auto& m : generator.movesChunk()) {
             int undos = b.applyMove(m);
             if (first) {
