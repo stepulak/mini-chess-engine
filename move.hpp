@@ -2,6 +2,7 @@
 
 #include "figures.hpp"
 
+#include <iostream>
 #include <vector>
 
 struct Point {
@@ -16,15 +17,24 @@ struct Point {
     {
     }
 
-    bool operator==(const Point& p) const {
+    bool operator==(const Point& p) const
+    {
         return x == p.x && y == p.y;
     }
 };
+
+static std::ostream& operator<<(std::ostream& os, const Point& p)
+{
+    os << static_cast<char>(p.x + 'a') << (p.y + 1);
+    return os;
+}
 
 struct MoveBase {
     Point from;
     Point to;
     Square toSq;
+
+    MoveBase() = default;
 
     MoveBase(Point from_, Point to_, Square toSq_)
         : from(from_)
@@ -35,13 +45,16 @@ struct MoveBase {
 
     virtual ~MoveBase() = default;
 
-    bool operator==(const MoveBase& mb) const {
+    bool operator==(const MoveBase& mb) const
+    {
         return from == mb.from && to == mb.to && toSq == mb.toSq;
     }
 };
 
 struct Move : MoveBase {
     bool castling;
+
+    Move() = default;
 
     Move(Point from_, Point to_, Square toSq_, bool castling_ = false)
         : MoveBase(std::move(from_), std::move(to_), toSq_)
@@ -54,10 +67,16 @@ struct Move : MoveBase {
     {
     }
 
-    bool operator==(const Move& m) const {
+    bool operator==(const Move& m) const
+    {
         return MoveBase::operator==(m) && castling == m.castling;
     }
 };
+
+static std::ostream& operator<<(std::ostream& os, const Move& m)
+{
+    return os << m.from << m.to;
+}
 
 struct UndoMove : MoveBase {
     Square fromSq;

@@ -7,15 +7,6 @@
 
 #include <iostream>
 
-/*
-TODO:
-player move validation
-endgame:
-    draw
-    win
-    loss
-*/
-
 namespace {
 
 constexpr auto COMPUTER_PLAY_TIME = 2000u;
@@ -85,7 +76,7 @@ void playerPlays(Board& board, BoardStats& boardStats, Color col)
     }
 }
 
-void computerPlays(Board& board, BoardStats& boardStats, Color col)
+Move computerPlays(Board& board, BoardStats& boardStats, Color col)
 {
     AI ai(board, col, boardStats);
     Timer timer(COMPUTER_PLAY_TIME, [&] {
@@ -98,13 +89,13 @@ void computerPlays(Board& board, BoardStats& boardStats, Color col)
     timer.join();
 
     const auto m = ai.bestMove();
-
     if (!m) {
-        throw std::runtime_error("");
+        throw std::runtime_error("Computer - no move available");
     }
-
     board.applyMove(*m);
     boardStats.visit(board);
+
+    std::cout << "My move: " << *m << std::endl << std::endl;
 }
 
 enum class GameStatus {
@@ -113,13 +104,14 @@ enum class GameStatus {
     WIN_OR_LOSS
 };
 
-template<typename Fn>
-void forEachMove(Board& b, Color c, Fn&& f){
-    for(auto generator = board.moveGenerator(c); generator.hasMoves(); ) {
+template <typename Fn>
+void forEachMove(Board& b, Color c, Fn&& f)
+{
+    for (auto generator = b.moveGenerator(c); generator.hasMoves();) {
         for (const auto& m : generator.movesChunk()) {
-            const auto undos = board.applyMove(m);
+            const auto undos = b.applyMove(m);
             f(m);
-            board.undoMove(undos);
+            b.undoMove(undos);
         }
     }
 }
@@ -150,6 +142,29 @@ GameStatus gameStatus(Board& board, Color col)
 
 } // namespace
 
+int main()
+{
+    Board board;
+    BoardStats boardStats;
+
+    auto color = Color::WHITE;
+    bool computerTurn = true;
+
+    while (true) {
+        std::cout << board;
+        if (computerTurn) {
+            computerPlays(board, boardStats, color);
+        } else {
+            playerPlays(board, boardStats, color);
+        }
+        computerTurn = !computerTurn;
+        color = enemyColor(color);
+    }
+
+    return 0;
+}
+
+/*
 int main()
 {
     Board b;
@@ -228,3 +243,4 @@ int main()
 
     return 0;
 }
+*/

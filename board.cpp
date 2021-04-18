@@ -139,5 +139,6 @@ std::ostream& operator<<(std::ostream& os, const Board& b)
     for (int x = 0; x < b.WIDTH; x++) {
         std::cout << static_cast<char>(x + 'a') << '.';
     }
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
+    return os;
 }
