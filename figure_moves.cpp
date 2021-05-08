@@ -119,7 +119,7 @@ void kingMovesIdle(MOVES_GENERATOR_ARGS)
         moves.emplace_back(Move { x, y, 2, y, sq, true });
     }
     // Right castling
-    if (figure(b.get(Board::WIDTH - 1u, y)) == Figure::ROOK_IDLE && pathClear(x + 1, Board::WIDTH)) {
+    if (figure(b.get(Board::WIDTH - 1u, y)) == Figure::ROOK_IDLE && pathClear(x + 1, Board::WIDTH - 1u)) {
         moves.emplace_back(Move { x, y, Board::WIDTH - 2u, y, sq, true });
     }
 }
@@ -169,7 +169,7 @@ void pawnMoves(MOVES_GENERATOR_ARGS)
     }
 }
 
-void pawnMovesWithEnPassant(MOVES_GENERATOR_ARGS)
+void pawnMovesIdle(MOVES_GENERATOR_ARGS)
 {
     pawnMoves(moves, b, x, y);
 
@@ -177,7 +177,7 @@ void pawnMovesWithEnPassant(MOVES_GENERATOR_ARGS)
     const auto dir = pawnDirection(col);
 
     if (figure(b.get(x, y + dir)) == Figure::NONE && figure(b.get(x, y + dir * 2)) == Figure::NONE) {
-        moves.emplace_back(Move { x, y, x, y + dir * 2, square(Figure::PAWN, col) });
+        moves.emplace_back(Move { x, y, x, y + dir * 2, square(Figure::PAWN_EN_PASSANT, col) });
     }
 }
 
@@ -185,8 +185,8 @@ using MoveFunction = std::function<void(MOVES_GENERATOR_ARGS)>;
 
 const std::array<MoveFunction, NUM_FIGURES> FIGURE_MOVES = {
     pawnMoves,
-    pawnMoves, // pawn idle
-    pawnMovesWithEnPassant, // pawn en passant
+    pawnMovesIdle, // pawn idle
+    pawnMoves, // pawn en passant
     knightMoves,
     bishopMoves,
     rookMoves,
