@@ -82,6 +82,10 @@ public:
     size_t applyMove(const Move& m);
     void undoMove(size_t numUndoMoves);
 
+    void clearUndoMoves() {
+        _undoMoves.clear();
+    }
+
     static constexpr bool validIndex(int x, int y)
     {
         return x >= 0 && y >= 0 && x < WIDTH && y < HEIGHT;

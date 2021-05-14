@@ -95,6 +95,7 @@ Move computerPlays(Board& board, BoardStats& boardStats, Color col)
         throw std::runtime_error("Computer - no move available");
     }
     board.applyMove(*m);
+    board.clearUndoMoves();
     boardStats.visit(board);
 
     /*TODO REMOVE*/std::cout << "SCORE: " << board.score() << std::endl; 
@@ -105,7 +106,7 @@ Move computerPlays(Board& board, BoardStats& boardStats, Color col)
 enum class GameStatus {
     CONTINUE,
     DRAW,
-    WIN_OR_LOSS
+    WIN_LOSS
 };
 
 template <typename Fn>
@@ -123,18 +124,21 @@ void forEachMove(Board& b, Color c, Fn&& f)
 GameStatus gameStatus(Board& board, Color col)
 {
     if (board.kingCaptured()) {
-        return GameStatus::WIN_OR_LOSS;
+        return GameStatus::WIN_LOSS;
     }
     const auto ecol = enemyColor(col);
     bool draw = true;
 
-    forEachMove(board, ecol, [&](const auto& m1) {
-        forEachMove(board, col, [&](const auto& m2) {
-            if (draw && !board.kingCaptured()) {
+    forEachMove(board, col, [&](const auto&) {
+        if (draw) {
+            bool kingAlive = true;
+            forEachMove(board, ecol, [&](const auto&) {
+                kingAlive = kingAlive && !board.kingCaptured();
+            });
+            if (kingAlive) {
                 draw = false;
-                return;
             }
-        });
+        }
     });
 
     if (draw) {
@@ -142,6 +146,23 @@ GameStatus gameStatus(Board& board, Color col)
     }
 
     return GameStatus::CONTINUE;
+}
+
+bool resolveGameStatus(Board& board, Color col, bool computerTurn, GameStatus status)
+{
+    if (status == GameStatus::WIN_LOSS) {
+        if (computerTurn) {
+            std::cout << "You have lost." << std::endl;
+        } else {
+            std::cout << "You have won!" << std::endl;
+        }
+        return true;
+    }
+    if (status == GameStatus::DRAW) {
+        std::cout << "Draw!" << std::endl;
+        return true;
+    }
+    return false;
 }
 
 } // namespace
@@ -156,6 +177,12 @@ int main()
 
     while (true) {
         std::cout << board;
+
+        const auto status = gameStatus(board, color);
+        if (resolveGameStatus(board, color, computerTurn, status)) {
+            break;
+        }
+
         if (computerTurn) {
             computerPlays(board, boardStats, color);
         } else {
@@ -163,8 +190,6 @@ int main()
         }
         computerTurn = !computerTurn;
         color = enemyColor(color);
-
-        // TODO: game status
     }
 
     return 0;

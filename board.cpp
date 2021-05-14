@@ -42,30 +42,35 @@ Board::Board()
 {
     _board.fill(EMPTY_SQUARE);
 
+    set(0, 0, square(Figure::KING_IDLE, Color::WHITE));
+    //set(1, 2, square(Figure::QUEEN, Color::BLACK));
+    set(3, 2, square(Figure::KING_IDLE, Color::BLACK));
+    
+    //set(4, 4, square(Figure::PAWN, Color::WHITE));
     for (int x = 0; x < WIDTH; x++) {
         set(x, 1, square(Figure::PAWN_IDLE, Color::WHITE));
         set(x, 6, square(Figure::PAWN_IDLE, Color::BLACK));
     }
 
-    set(0, 0, square(Figure::ROOK_IDLE, Color::WHITE));
-    set(0, 7, square(Figure::ROOK_IDLE, Color::BLACK));
-    set(7, 0, square(Figure::ROOK_IDLE, Color::WHITE));
-    set(7, 7, square(Figure::ROOK_IDLE, Color::BLACK));
-
-    set(1, 0, square(Figure::KNIGHT, Color::WHITE));
-    set(1, 7, square(Figure::KNIGHT, Color::BLACK));
-    set(6, 0, square(Figure::KNIGHT, Color::WHITE));
-    set(6, 7, square(Figure::KNIGHT, Color::BLACK));
-
-    set(2, 0, square(Figure::BISHOP, Color::WHITE));
-    set(2, 7, square(Figure::BISHOP, Color::BLACK));
-    set(5, 0, square(Figure::BISHOP, Color::WHITE));
-    set(5, 7, square(Figure::BISHOP, Color::BLACK));
-
-    set(3, 0, square(Figure::QUEEN, Color::WHITE));
-    set(3, 7, square(Figure::QUEEN, Color::BLACK));
-    set(4, 0, square(Figure::KING_IDLE, Color::WHITE));
-    set(4, 7, square(Figure::KING_IDLE, Color::BLACK));
+    //set(0, 0, square(Figure::ROOK_IDLE, Color::WHITE));
+    //set(0, 7, square(Figure::ROOK_IDLE, Color::BLACK));
+    //set(7, 0, square(Figure::ROOK_IDLE, Color::WHITE));
+    //set(7, 7, square(Figure::ROOK_IDLE, Color::BLACK));
+//
+    //set(1, 0, square(Figure::KNIGHT, Color::WHITE));
+    //set(1, 7, square(Figure::KNIGHT, Color::BLACK));
+    //set(6, 0, square(Figure::KNIGHT, Color::WHITE));
+    //set(6, 7, square(Figure::KNIGHT, Color::BLACK));
+//
+    //set(2, 0, square(Figure::BISHOP, Color::WHITE));
+    //set(2, 7, square(Figure::BISHOP, Color::BLACK));
+    //set(5, 0, square(Figure::BISHOP, Color::WHITE));
+    //set(5, 7, square(Figure::BISHOP, Color::BLACK));
+//
+    //set(3, 0, square(Figure::QUEEN, Color::WHITE));
+    //set(3, 7, square(Figure::QUEEN, Color::BLACK));
+    //set(4, 0, square(Figure::KING_IDLE, Color::WHITE));
+    //set(4, 7, square(Figure::KING_IDLE, Color::BLACK));
 }
 
 void Board::set(int pos, Square sq)

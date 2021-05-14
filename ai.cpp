@@ -2,8 +2,8 @@
 
 namespace {
 
-constexpr int MIN = std::numeric_limits<int>::min() + 1;
-constexpr int MAX = std::numeric_limits<int>::max() - 1;
+constexpr int MIN = -9999999; //std::numeric_limits<int>::min() + 1;
+constexpr int MAX =  9999999; //std::numeric_limits<int>::max() - 1;
 
 } // namespace
 
@@ -37,7 +37,7 @@ void AI::stop()
 std::optional<Move> AI::bestMove() const
 {
     if (!_bestMove) {
-        return {};
+        return std::nullopt;
     }
     return _bestMove->first;
 }
@@ -61,6 +61,8 @@ std::optional<AI::MoveAndScore> AI::countBestMove(Board& b, Color c, size_t dept
             }
             const auto score = -negascout(b, enemyColor(c), MIN, MAX, depth - 1u, c == Color::WHITE, _stop);
             if (score > bestScore) {
+                std::cout << "BEST" << std::endl;
+                //std::cout << m << std::endl;
                 bestScore = score;
                 bestMove = m;
             }
@@ -77,7 +79,8 @@ int AI::negascout(Board& b, Color c, int alpha, int beta, size_t depth, bool max
         // Bottom of search tree
         // King is dead
         // Negascout is stopped and ply finished
-        return b.score() * (maxing ? 1 : -1);
+        //std::cout << depth << std::endl;
+        return b.score() * (depth % 2 ? -1 : 1);
     }
     int score = MIN;
     bool first = true;

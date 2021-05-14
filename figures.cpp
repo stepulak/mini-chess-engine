@@ -2,6 +2,8 @@
 
 #include <array>
 
+#include <iostream>
+
 using Pst = std::array<int, 64u>;
 
 namespace {
@@ -135,7 +137,7 @@ int figureScore(Figure f, Color c, int pos)
     }
     // for white color, PST tables are reversed
     if (c == Color::WHITE) {
-        pos = 64 - pos;
+        pos = 63 - pos;
     }
     const auto fi = figureIndex(f);
     const auto fscore = FIGURE_SCORE[fi];
