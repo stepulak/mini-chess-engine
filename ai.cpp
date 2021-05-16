@@ -61,8 +61,6 @@ std::optional<AI::MoveAndScore> AI::countBestMove(Board& b, Color c, size_t dept
             }
             const auto score = -negascout(b, enemyColor(c), MIN, MAX, depth - 1u, c == Color::WHITE, _stop);
             if (score > bestScore) {
-                std::cout << "BEST" << std::endl;
-                //std::cout << m << std::endl;
                 bestScore = score;
                 bestMove = m;
             }

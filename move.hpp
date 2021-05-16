@@ -51,25 +51,31 @@ struct MoveBase {
     }
 };
 
+enum class MoveType {
+    STANDARD,
+    CASTLING,
+    EN_PASSANT
+};
+
 struct Move : MoveBase {
-    bool castling;
+    MoveType type;
 
     Move() = default;
 
-    Move(Point from_, Point to_, Square toSq_, bool castling_ = false)
+    Move(Point from_, Point to_, Square toSq_, MoveType type_ = MoveType::STANDARD)
         : MoveBase(std::move(from_), std::move(to_), toSq_)
-        , castling(castling_)
+        , type(type_)
     {
     }
 
-    Move(int fx, int fy, int tx, int ty, Square toSq_, bool castling = false)
-        : Move(Point { fx, fy }, Point { tx, ty }, toSq_, castling)
+    Move(int fx, int fy, int tx, int ty, Square toSq_, MoveType type_ = MoveType::STANDARD)
+        : Move(Point { fx, fy }, Point { tx, ty }, toSq_, type_)
     {
     }
 
     bool operator==(const Move& m) const
     {
-        return MoveBase::operator==(m) && castling == m.castling;
+        return MoveBase::operator==(m) && type == m.type;
     }
 };
 

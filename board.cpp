@@ -42,35 +42,40 @@ Board::Board()
 {
     _board.fill(EMPTY_SQUARE);
 
-    set(0, 0, square(Figure::KING_IDLE, Color::WHITE));
-    //set(1, 2, square(Figure::QUEEN, Color::BLACK));
-    set(3, 2, square(Figure::KING_IDLE, Color::BLACK));
+    //set(3, 7, square(Figure::QUEEN, Color::WHITE));
+    //
+    //set(5, 7, square(Figure::KING, Color::BLACK));
+    //set(6, 5, square(Figure::KING, Color::WHITE));
     
+    //set(0, 0, square(Figure::KING_IDLE, Color::WHITE));
+    //set(1, 2, square(Figure::QUEEN, Color::BLACK));
+    //set(3, 2, square(Figure::KING_IDLE, Color::BLACK));
+
     //set(4, 4, square(Figure::PAWN, Color::WHITE));
     for (int x = 0; x < WIDTH; x++) {
         set(x, 1, square(Figure::PAWN_IDLE, Color::WHITE));
         set(x, 6, square(Figure::PAWN_IDLE, Color::BLACK));
     }
 
-    //set(0, 0, square(Figure::ROOK_IDLE, Color::WHITE));
-    //set(0, 7, square(Figure::ROOK_IDLE, Color::BLACK));
-    //set(7, 0, square(Figure::ROOK_IDLE, Color::WHITE));
-    //set(7, 7, square(Figure::ROOK_IDLE, Color::BLACK));
-//
-    //set(1, 0, square(Figure::KNIGHT, Color::WHITE));
-    //set(1, 7, square(Figure::KNIGHT, Color::BLACK));
-    //set(6, 0, square(Figure::KNIGHT, Color::WHITE));
-    //set(6, 7, square(Figure::KNIGHT, Color::BLACK));
-//
-    //set(2, 0, square(Figure::BISHOP, Color::WHITE));
-    //set(2, 7, square(Figure::BISHOP, Color::BLACK));
-    //set(5, 0, square(Figure::BISHOP, Color::WHITE));
-    //set(5, 7, square(Figure::BISHOP, Color::BLACK));
-//
-    //set(3, 0, square(Figure::QUEEN, Color::WHITE));
-    //set(3, 7, square(Figure::QUEEN, Color::BLACK));
-    //set(4, 0, square(Figure::KING_IDLE, Color::WHITE));
-    //set(4, 7, square(Figure::KING_IDLE, Color::BLACK));
+    set(0, 0, square(Figure::ROOK_IDLE, Color::WHITE));
+    set(0, 7, square(Figure::ROOK_IDLE, Color::BLACK));
+    set(7, 0, square(Figure::ROOK_IDLE, Color::WHITE));
+    set(7, 7, square(Figure::ROOK_IDLE, Color::BLACK));
+
+    set(1, 0, square(Figure::KNIGHT, Color::WHITE));
+    set(1, 7, square(Figure::KNIGHT, Color::BLACK));
+    set(6, 0, square(Figure::KNIGHT, Color::WHITE));
+    set(6, 7, square(Figure::KNIGHT, Color::BLACK));
+
+    set(2, 0, square(Figure::BISHOP, Color::WHITE));
+    set(2, 7, square(Figure::BISHOP, Color::BLACK));
+    set(5, 0, square(Figure::BISHOP, Color::WHITE));
+    set(5, 7, square(Figure::BISHOP, Color::BLACK));
+
+    set(3, 0, square(Figure::QUEEN, Color::WHITE));
+    set(3, 7, square(Figure::QUEEN, Color::BLACK));
+    set(4, 0, square(Figure::KING_IDLE, Color::WHITE));
+    set(4, 7, square(Figure::KING_IDLE, Color::BLACK));
 }
 
 void Board::set(int pos, Square sq)
@@ -102,11 +107,20 @@ size_t Board::applyMove(const Move& m)
 
     _score += figureScore(figure(m.toSq), color(m.toSq), position(m.to.x, m.to.y));
 
-    if (m.castling) {
-        int fx = (m.from.x < m.to.x) ? 7 : 0;
-        int tx = m.to.x - (m.from.x < m.to.x ? 1 : -1);
-        int y = m.to.y;
+    if (m.type == MoveType::CASTLING) {
+        const int fx = (m.from.x < m.to.x) ? 7 : 0;
+        const int tx = m.to.x - (m.from.x < m.to.x ? 1 : -1);
+        const int y = m.to.y;
         return applyMove(Move { fx, y, tx, m.to.y, square(Figure::ROOK, fromSqCol) }) + 1u;
+    }
+    if (m.type == MoveType::EN_PASSANT) {
+        const int x = m.to.x;
+        const int y = m.from.y;
+        const auto sq = get(x, y);
+        _undoMoves.emplace_back(UndoMove { x, y, x, y, sq, sq, _score });
+        _score -= figureScore(figure(sq), color(sq), position(x, y));
+        set(x, y, EMPTY_SQUARE);
+        return 2u;
     }
 
     return 1u;

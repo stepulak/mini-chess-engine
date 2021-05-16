@@ -116,11 +116,11 @@ void kingMovesIdle(MOVES_GENERATOR_ARGS)
 
     // Left castling
     if (figure(b.get(0, y)) == Figure::ROOK_IDLE && pathClear(1, x)) {
-        moves.emplace_back(Move { x, y, 2, y, sq, true });
+        moves.emplace_back(Move { x, y, 2, y, sq, MoveType::CASTLING });
     }
     // Right castling
     if (figure(b.get(Board::WIDTH - 1u, y)) == Figure::ROOK_IDLE && pathClear(x + 1, Board::WIDTH - 1u)) {
-        moves.emplace_back(Move { x, y, Board::WIDTH - 2u, y, sq, true });
+        moves.emplace_back(Move { x, y, Board::WIDTH - 2u, y, sq, MoveType::CASTLING });
     }
 }
 
@@ -147,7 +147,7 @@ int pawnDirection(Color pawnCol)
 
 bool promotePawn(Color pawnCol, int y)
 {
-    return pawnCol == Color::WHITE ? (y == Board::SIZE - 1) : (y == 0);
+    return pawnCol == Color::WHITE ? (y == Board::HEIGHT - 1) : (y == 0);
 }
 
 void pawnMoves(MOVES_GENERATOR_ARGS)
@@ -162,9 +162,20 @@ void pawnMoves(MOVES_GENERATOR_ARGS)
     }
 
     for (int i = -1; i <= 1; i += 2) {
-        if (Board::validIndex(x + i, y + dir) && enemy(fromSq, b.get(x + i, y + dir))) {
-            const auto toSq = promotePawn(col, y + dir) ? square(Figure::QUEEN, col) : square(Figure::PAWN, col);
-            moves.emplace_back(Move { x, y, x + i, y + dir, toSq });
+        bool indexValid = Board::validIndex(x + i, y + dir);
+        if (!indexValid) {
+            continue;
+        }
+        const auto toSq = b.get(x + i, y + dir);
+        if (enemy(fromSq, toSq)) {
+            const auto toSqNew = promotePawn(col, y + dir) ? square(Figure::QUEEN, col) : square(Figure::PAWN, col);
+            moves.emplace_back(Move { x, y, x + i, y + dir, toSqNew });
+        }
+        if ((y == 3 || y == 4) && figure(toSq) == Figure::NONE) {
+            const auto sideSq = b.get(x + i, y);
+            if (figure(sideSq) == Figure::PAWN_EN_PASSANT && enemy(fromSq, sideSq)) {
+                moves.emplace_back(Move { x, y, x + i, y + dir, fromSq, MoveType::EN_PASSANT });
+            }
         }
     }
 }
@@ -216,5 +227,8 @@ bool figureMoveValid(const Move& m, const Board& b, Color c)
     }
     const auto f = figure(sq);
     const auto moves = figureMoves(f, b, m.from.x, m.from.y);
+    std::cout << int(figure(moves[0].toSq)) << std::endl;
+    std::cout << int(figure(m.toSq)) << std::endl;
+
     return std::find(moves.begin(), moves.end(), m) != moves.end();
 }

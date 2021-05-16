@@ -30,6 +30,14 @@ bool detectCastling(const Point& from, const Point& to, const Board& board)
     return false;
 }
 
+bool detectEnPassantCapture(Figure fig, const Point& from, const Point& to, const Board& board)
+{
+    return fig == Figure::PAWN &&
+        from.x != to.x &&
+        (from.y == 3 || from.y == 4) &&
+        figure(board.get(to.x, to.y)) == Figure::NONE;
+}
+
 std::optional<Move> parseMove(const std::string& str, const Board& board)
 {
     const Point from = { str[0] - 'a', str[1] - '1' };
@@ -38,7 +46,6 @@ std::optional<Move> parseMove(const std::string& str, const Board& board)
     if (!pointValid(from) || !pointValid(to)) {
         return {};
     }
-    const auto castling = detectCastling(from, to, board);
     const auto sq = board.get(from.x, from.y);
     const auto fig = figure(sq);
     const auto col = color(sq);
@@ -53,11 +60,21 @@ std::optional<Move> parseMove(const std::string& str, const Board& board)
         resultFigure = std::abs(from.y - to.y) == 2 ? Figure::PAWN_EN_PASSANT : Figure::PAWN;
     } else if (fig == Figure::PAWN_EN_PASSANT) {
         resultFigure = Figure::PAWN;
+    } else if (fig == Figure::PAWN) {
+        resultFigure = (to.y == 0 || to.y == Board::SIZE - 1) ? Figure::QUEEN : Figure::PAWN;
     } else {
         resultFigure = fig;
     }
 
-    return Move { from, to, square(resultFigure, col), castling };
+    MoveType moveType = MoveType::STANDARD;
+
+    if (detectCastling(from, to, board)) {
+        moveType = MoveType::CASTLING;
+    } else if (detectEnPassantCapture(fig, from, to, board)) {
+        moveType = MoveType::EN_PASSANT;
+    }
+
+    return Move { from, to, square(resultFigure, col), moveType };
 }
 
 void playerPlays(Board& board, BoardStats& boardStats, Color col)
@@ -130,14 +147,15 @@ GameStatus gameStatus(Board& board, Color col)
     bool draw = true;
 
     forEachMove(board, col, [&](const auto&) {
-        if (draw) {
-            bool kingAlive = true;
-            forEachMove(board, ecol, [&](const auto&) {
-                kingAlive = kingAlive && !board.kingCaptured();
-            });
-            if (kingAlive) {
-                draw = false;
-            }
+        if (!draw || board.kingCaptured()) {
+            return;
+        }
+        bool kingAlive = true;
+        forEachMove(board, ecol, [&](const auto&) {
+            kingAlive = kingAlive && !board.kingCaptured();
+        });
+        if (kingAlive) {
+            draw = false;
         }
     });
 
@@ -152,9 +170,9 @@ bool resolveGameStatus(Board& board, Color col, bool computerTurn, GameStatus st
 {
     if (status == GameStatus::WIN_LOSS) {
         if (computerTurn) {
-            std::cout << "You have lost." << std::endl;
-        } else {
             std::cout << "You have won!" << std::endl;
+        } else {
+            std::cout << "You have lost!" << std::endl;
         }
         return true;
     }
