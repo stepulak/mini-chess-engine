@@ -79,6 +79,8 @@ public:
         return b._hash == _hash && b._board == _board;
     }
 
+    Point kingPosition(Color c) const;
+
     size_t applyMove(const Move& m);
     void undoMove(size_t numUndoMoves);
 

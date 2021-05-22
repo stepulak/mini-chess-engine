@@ -46,7 +46,7 @@ Board::Board()
     //
     //set(5, 7, square(Figure::KING, Color::BLACK));
     //set(6, 5, square(Figure::KING, Color::WHITE));
-    
+
     //set(0, 0, square(Figure::KING_IDLE, Color::WHITE));
     //set(1, 2, square(Figure::QUEEN, Color::BLACK));
     //set(3, 2, square(Figure::KING_IDLE, Color::BLACK));
@@ -87,6 +87,20 @@ void Board::set(int pos, Square sq)
     } else {
         _hash |= (1 << pos);
     }
+}
+
+Point Board::kingPosition(Color c) const
+{
+    for (int x = 0; x < WIDTH; x++) {
+        for (int y = 0; y < HEIGHT; y++) {
+            const auto sq = get(x, y);
+            const auto fig = figure(sq);
+            if (color(sq) == c && (fig == Figure::KING || fig == Figure::KING_IDLE)) {
+                return Point { x, y };
+            }
+        }
+    }
+    throw std::runtime_error("King not found!");
 }
 
 size_t Board::applyMove(const Move& m)
@@ -158,6 +172,7 @@ std::ostream& operator<<(std::ostream& os, const Board& b)
     for (int x = 0; x < b.WIDTH; x++) {
         std::cout << static_cast<char>(x + 'a') << '.';
     }
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl
+              << std::endl;
     return os;
 }

@@ -32,5 +32,6 @@ private:
     std::atomic_bool _stop = false;
 
     std::optional<MoveAndScore> countBestMove(Board& b, Color c, size_t depth) const;
-    static int negascout(Board& b, Color c, int alpha, int beta, size_t depth, bool maxing, const std::atomic_bool& stop);
+    bool kingInCheck(const Board& b, Color c) const;
+    static int negascout(Board& b, Color c, int alpha, int beta, size_t depth, const std::atomic_bool& stop);
 };

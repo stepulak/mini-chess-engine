@@ -2,8 +2,8 @@
 
 namespace {
 
-constexpr int MIN = -9999999; //std::numeric_limits<int>::min() + 1;
-constexpr int MAX =  9999999; //std::numeric_limits<int>::max() - 1;
+constexpr int MIN = std::numeric_limits<int>::min() + 1;
+constexpr int MAX = std::numeric_limits<int>::max() - 1;
 
 } // namespace
 
@@ -48,18 +48,23 @@ std::optional<AI::MoveAndScore> AI::countBestMove(Board& b, Color c, size_t dept
     if (!generator.hasMoves()) {
         return {};
     }
+    const bool kingCheck = kingInCheck(b, c);
     int bestScore = MIN;
     Move bestMove;
 
     while (generator.hasMoves()) {
         for (const auto& m : generator.movesChunk()) {
+            // You cannot do castling if king is in check
+            if (m.type == MoveType::CASTLING && kingCheck) {
+                continue;
+            }
             int undos = b.applyMove(m);
             if (_boardStats.threeFoldRepetition(b)) {
                 // skip this move
                 b.undoMove(undos);
                 continue;
             }
-            const auto score = -negascout(b, enemyColor(c), MIN, MAX, depth - 1u, c == Color::WHITE, _stop);
+            const auto score = -negascout(b, enemyColor(c), MIN, MAX, depth - 1u, _stop);
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = m;
@@ -71,13 +76,27 @@ std::optional<AI::MoveAndScore> AI::countBestMove(Board& b, Color c, size_t dept
     return std::make_optional(std::make_pair(bestMove, bestScore));
 }
 
-int AI::negascout(Board& b, Color c, int alpha, int beta, size_t depth, bool maxing, const std::atomic_bool& stop)
+bool AI::kingInCheck(const Board& b, Color c) const
+{
+    const auto kingPosition = b.kingPosition(c);
+
+    for (auto generator = b.moveGenerator(enemyColor(c)); generator.hasMoves();) {
+        for (const auto& m : generator.movesChunk()) {
+            if (m.to == kingPosition) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+int AI::negascout(Board& b, Color c, int alpha, int beta, size_t depth, const std::atomic_bool& stop)
 {
     if (depth == 0 || b.kingCaptured() || (stop && depth % 2u == 0u)) {
         // Bottom of search tree
         // King is dead
         // Negascout is stopped and ply finished
-        //std::cout << depth << std::endl;
         return b.score() * (depth % 2 ? -1 : 1);
     }
     int score = MIN;
@@ -87,12 +106,12 @@ int AI::negascout(Board& b, Color c, int alpha, int beta, size_t depth, bool max
         for (const auto& m : generator.movesChunk()) {
             int undos = b.applyMove(m);
             if (first) {
-                score = -negascout(b, enemyColor(c), -beta, -alpha, depth - 1, maxing, stop);
+                score = -negascout(b, enemyColor(c), -beta, -alpha, depth - 1, stop);
                 first = false;
             } else {
-                score = -negascout(b, enemyColor(c), -alpha - 1, -alpha, depth - 1, maxing, stop);
+                score = -negascout(b, enemyColor(c), -alpha - 1, -alpha, depth - 1, stop);
                 if (alpha < score && score < beta) {
-                    score = -negascout(b, enemyColor(c), -beta, -score, depth - 1, maxing, stop);
+                    score = -negascout(b, enemyColor(c), -beta, -score, depth - 1, stop);
                 }
             }
             b.undoMove(undos);

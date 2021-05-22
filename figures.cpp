@@ -135,8 +135,8 @@ int figureScore(Figure f, Color c, int pos)
     if (f == Figure::NONE) {
         return 0;
     }
-    // for white color, PST tables are reversed
-    if (c == Color::WHITE) {
+    // for BLACK color, PST tables are reversed
+    if (c == Color::BLACK) {
         pos = 63 - pos;
     }
     const auto fi = figureIndex(f);

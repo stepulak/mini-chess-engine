@@ -32,10 +32,7 @@ bool detectCastling(const Point& from, const Point& to, const Board& board)
 
 bool detectEnPassantCapture(Figure fig, const Point& from, const Point& to, const Board& board)
 {
-    return fig == Figure::PAWN &&
-        from.x != to.x &&
-        (from.y == 3 || from.y == 4) &&
-        figure(board.get(to.x, to.y)) == Figure::NONE;
+    return fig == Figure::PAWN && from.x != to.x && (from.y == 3 || from.y == 4) && figure(board.get(to.x, to.y)) == Figure::NONE;
 }
 
 std::optional<Move> parseMove(const std::string& str, const Board& board)
@@ -115,9 +112,10 @@ Move computerPlays(Board& board, BoardStats& boardStats, Color col)
     board.clearUndoMoves();
     boardStats.visit(board);
 
-    /*TODO REMOVE*/std::cout << "SCORE: " << board.score() << std::endl; 
+    /*TODO REMOVE*/ std::cout << "SCORE: " << board.score() << std::endl;
 
-    std::cout << "My move: " << *m << std::endl << std::endl;
+    std::cout << "My move: " << *m << std::endl
+              << std::endl;
 }
 
 enum class GameStatus {
@@ -170,9 +168,9 @@ bool resolveGameStatus(Board& board, Color col, bool computerTurn, GameStatus st
 {
     if (status == GameStatus::WIN_LOSS) {
         if (computerTurn) {
-            std::cout << "You have won!" << std::endl;
-        } else {
             std::cout << "You have lost!" << std::endl;
+        } else {
+            std::cout << "You have won!" << std::endl;
         }
         return true;
     }
@@ -194,20 +192,25 @@ int main()
     bool computerTurn = true;
 
     while (true) {
-        std::cout << board;
+        try {
+            std::cout << board;
 
-        const auto status = gameStatus(board, color);
-        if (resolveGameStatus(board, color, computerTurn, status)) {
-            break;
-        }
+            const auto status = gameStatus(board, color);
+            if (resolveGameStatus(board, color, computerTurn, status)) {
+                break;
+            }
 
-        if (computerTurn) {
-            computerPlays(board, boardStats, color);
-        } else {
-            playerPlays(board, boardStats, color);
+            if (computerTurn) {
+                computerPlays(board, boardStats, color);
+            } else {
+                playerPlays(board, boardStats, color);
+            }
+            computerTurn = !computerTurn;
+            color = enemyColor(color);
+        } catch (const std::exception& ex) {
+            std::cerr << "FATAL: " << ex.what() << std::endl;
+            return -1;
         }
-        computerTurn = !computerTurn;
-        color = enemyColor(color);
     }
 
     return 0;
