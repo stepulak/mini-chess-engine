@@ -112,10 +112,9 @@ Move computerPlays(Board& board, BoardStats& boardStats, Color col)
     board.clearUndoMoves();
     boardStats.visit(board);
 
-    /*TODO REMOVE*/ std::cout << "SCORE: " << board.score() << std::endl;
-
-    std::cout << "My move: " << *m << std::endl
-              << std::endl;
+    std::cout << "Score: " << board.score() << std::endl;
+    std::cout << "My move: " << *m << std::endl;
+    std::cout << std::endl;
 }
 
 enum class GameStatus {

@@ -4,21 +4,26 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <atomic>
+
 
 class Timer final {
 public:
-    Timer(size_t sleepMilliseconds, const std::function<void()>& fn)
+    Timer(size_t sleepMilliseconds, const std::function<void()>& callback)
         : _thread([&] {
             using namespace std::chrono;
             const auto start = system_clock::now();
+
             while (true) {
                 const auto duration = duration_cast<milliseconds>(system_clock::now() - start).count();
-                if (sleepMilliseconds <= duration) {
-                    fn();
+
+                if (duration >= sleepMilliseconds) {
+                    callback();
                     break;
                 }
                 std::this_thread::sleep_for(milliseconds(1));
-                std::scoped_lock lock(_mutex);
+
+                // Manual stop, callback is not called
                 if (_stop) {
                     break;
                 }
@@ -29,7 +34,6 @@ public:
 
     void stop()
     {
-        std::scoped_lock lock(_mutex);
         _stop = true;
     }
 
@@ -39,7 +43,6 @@ public:
     }
 
 private:
-    std::mutex _mutex;
     std::thread _thread;
-    bool _stop = false;
+    std::atomic_bool _stop;
 };

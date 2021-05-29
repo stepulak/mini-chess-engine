@@ -142,6 +142,7 @@ int figureScore(Figure f, Color c, int pos)
     const auto fi = figureIndex(f);
     const auto fscore = FIGURE_SCORE[fi];
     const auto pstscore = FIGURE_PST[fi][pos];
+
     return (fscore + pstscore) * (c == Color::WHITE ? 1 : -1);
 }
 

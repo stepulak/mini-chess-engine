@@ -66,7 +66,7 @@ public:
 
     bool kingCaptured() const
     {
-        return std::abs(_score) > KING_CAPTURED_MIN_SCORE;
+        return std::abs(_score) >= KING_CAPTURED_MIN_SCORE;
     }
 
     size_t hash() const
