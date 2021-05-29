@@ -10,7 +10,8 @@
 class Timer final {
 public:
     Timer(size_t sleepMilliseconds, const std::function<void()>& callback)
-        : _thread([&] {
+        : _stop(false)
+        , _thread([&] {
             using namespace std::chrono;
             const auto start = system_clock::now();
 
@@ -43,6 +44,6 @@ public:
     }
 
 private:
-    std::thread _thread;
     std::atomic_bool _stop;
+    std::thread _thread;
 };
